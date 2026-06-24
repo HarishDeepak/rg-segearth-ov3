@@ -1,0 +1,13 @@
+setuptools
+platformdirs
+ftfy
+regex
+huggingface_hub
+iopath
+einops
+timm
+tomli
+pycocotools
+psutil
+openpyxl
+scikit-image

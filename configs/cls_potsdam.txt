@@ -1,0 +1,6 @@
+impervious surface, road, asphalt, paved road, concrete pavement, sidewalk, parking area, tarmac
+building, rooftop, structure, house, residential building, commercial roof, building roof
+low vegetation, grass, lawn, meadow, ground cover, low shrub, grassland, turf
+tree, treetop, forest canopy, woodland, dense tree cover, deciduous tree, conifer
+car, vehicle, automobile, parked vehicle, parked car, motor vehicle
+clutter, misc object, low structure, background object, undefined object

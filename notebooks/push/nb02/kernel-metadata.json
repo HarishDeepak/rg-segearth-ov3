@@ -1,0 +1,17 @@
+{
+  "id": "harish77718/nb02-potsdam-eval",
+  "title": "NB02 Potsdam Eval",
+  "code_file": "NB02_potsdam_eval.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/6isprs"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

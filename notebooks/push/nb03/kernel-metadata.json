@@ -1,0 +1,17 @@
+{
+  "id": "harish77718/nb03-hessen-infer",
+  "title": "NB03 Hessen Infer",
+  "code_file": "NB03_hessen_infer.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "harish77718/darmstadt-dop20-presliced"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

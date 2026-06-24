@@ -1,0 +1,17 @@
+{
+  "id": "harish77718/nb01-verify-data",
+  "title": "NB01 Verify Data",
+  "code_file": "NB01_verify_data.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/6isprs",
+    "harish77718/darmstadt-dop20-presliced"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
