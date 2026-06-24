@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.ipynb_checkpoints/
+.ipynb_checkpoints/
+data/
+weights/
+results/*.png
+results/*.npy
+results/*.csv
+!results/.gitkeep
+*.pt
+*.pth
+.env
