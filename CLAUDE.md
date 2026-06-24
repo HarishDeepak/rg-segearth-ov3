@@ -2,6 +2,9 @@
 
 Read this first at session start. Ground truth for this project.
 
+## This repo
+`https://github.com/HarishDeepak/rg-segearth-ov3` (private)
+
 ## What this project is
 
 Open-vocabulary remote sensing segmentation (Fraunhofer IGD Praktikum, SoSe 2026).
@@ -33,8 +36,9 @@ SegEarth-OV-3 is a separate method for comparison.
 - SegEarth-OV: 48.5% mIoU (zero-shot)
 - SegEarth-OV-3: 57.8% mIoU (zero-shot, SAM3 backbone)
 
-**TODO:** Run our NB02 to get our own Potsdam mIoU number with enriched prompts.
-**TODO:** Run NB03 to get quantitative F1 on Darmstadt via OSM pseudo-GT.
+**TODO:** Run NB01 on Kaggle to confirm label format (indexed vs RGB) before NB02.
+**TODO:** Run NB02 to get our own Potsdam mIoU number with enriched prompts.
+**TODO:** Run NB03 for Hessen — visual comparison only (no OSM F1 for now).
 
 ## Non-negotiable rules
 
@@ -58,16 +62,32 @@ SegEarth-OV-3 is a separate method for comparison.
 - `src/segearth_utils/` — our thin utilities (constants, osm_eval). No SAM3 code here.
 - `notebooks/` — 4 notebooks (see below). Logic in modules, notebooks orchestrate.
 - `results/` — output PNGs, CSVs, logits. Not committed (gitignored).
-- `data/` — local sample patches for NB01 verification. Not committed.
 
 ## Notebooks
 
-| Notebook | Runs on | Purpose |
-|---|---|---|
-| NB01_verify_data.ipynb | Local (no GPU) | Preview DOP20 patches, confirm RGBI, check class lists |
-| NB02_potsdam_eval.ipynb | Kaggle T4 | Quantitative eval on Potsdam val tile → mIoU / mAcc |
-| NB03_hessen_infer.ipynb | Kaggle T4 | Hessen inference + OSM pseudo-GT F1 |
-| NB04_demo.ipynb | Kaggle T4 | Live presentation demo (open-vocab, audience picks vocab) |
+| Notebook | Runs on | Datasets | Purpose |
+|---|---|---|---|
+| NB01_verify_data.ipynb | Kaggle CPU | rskt-potsdam-test-data, darmstadt-dop20 | Verify datasets, confirm label format (indexed vs RGB), preview patches |
+| NB02_potsdam_eval.ipynb | Kaggle T4 | sam3-weights, rskt-potsdam-test-data | Quantitative eval on Potsdam val tile `6_15` → mIoU / mAcc |
+| NB03_hessen_infer.ipynb | Kaggle T4 | sam3-weights, darmstadt-dop20 | Hessen inference → visual comparison (no F1 for now) |
+| NB04_demo.ipynb | Kaggle T4 | sam3-weights, darmstadt-dop20 | Live presentation demo (open-vocab, audience picks vocab) |
+
+## Dataset structures (confirmed)
+
+**Potsdam** — `rachanaamraghuthama/rskt-potsdam-test-data`
+- Kaggle path: `/kaggle/input/rskt-potsdam-test-data/6ISPRS/`
+- Files: `top_potsdam_{tile}_RGB.tif` + `top_potsdam_{tile}_label_noBoundary.tif`
+- Tiles: 5_14, 5_15, 6_13, 6_14, **6_15** (val), 7_13
+- Label format: **TBD — run NB01 cell 1.3 to confirm indexed vs RGB**
+
+**DOP20 (Hessen/Darmstadt)** — `dummyirl/darmstadt-dop20`
+- Kaggle path: `/kaggle/input/darmstadt-dop20/Darmstadt_dop20_presliced/darmstadt_dop20/images/`
+- Files: `dop20_32_474_5532_1_he_y{Y}_x{X}.png` — pre-sliced 256×256 PNG patches, ~1267 files
+- Channel format: **TBD — likely RGB (3ch) not RGBI (4ch) since PNG; NB01 will confirm**
+- NB03 implication: patches are already 256px — run each patch directly, no sliding window needed
+
+**Kaggle path rule:** `/kaggle/input/{slug-name}/` — only the part after the `/` in the slug.
+`dummyirl/darmstadt-dop20` → `/kaggle/input/darmstadt-dop20/` (not `/kaggle/input/datasets/dummyirl/...`)
 
 ## Kaggle dataset slugs
 
