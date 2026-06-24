@@ -31,12 +31,15 @@ TARGET_IMAGE = (
 if KAGGLE:
 
     from pathlib import Path as _Path
-    _sam3_root = _Path("/kaggle/input/sam3-weights")
-    _hits = list(_sam3_root.rglob("sam3.pt")) if _sam3_root.exists() else []
-    SAM3_CHECKPOINT = str(_hits[0]) if _hits else str(_sam3_root / "sam3.pt")
+    # datasets mount under /kaggle/input/datasets/<owner>/<slug>/
+    _hits = list(_Path("/kaggle/input").rglob("sam3.pt"))
+    SAM3_CHECKPOINT = str(_hits[0]) if _hits else (
+        "/kaggle/input/datasets/dummyirl/sam3-weights/sam3.pt"
+    )
 
     INPUT_FOLDER = (
-        "/kaggle/input/darmstadt-dop20/"
+        "/kaggle/input/datasets/harish77718/"
+        "darmstadt-dop20-presliced/"
     )
 
 else:
