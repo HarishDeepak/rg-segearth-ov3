@@ -74,28 +74,25 @@ SegEarth-OV-3 is a separate method for comparison.
 
 ## Dataset structures (confirmed)
 
-**Potsdam** — `rachanaamraghuthama/rskt-potsdam-test-data`
-- Kaggle path: `/kaggle/input/rskt-potsdam-test-data/6ISPRS/`
+**Potsdam** — `dummyirl/6isprs`
+- Kaggle path: `/kaggle/input/datasets/dummyirl/6isprs/6ISPRS/`
 - Files: `top_potsdam_{tile}_RGB.tif` + `top_potsdam_{tile}_label_noBoundary.tif`
 - Tiles: 5_14, 5_15, 6_13, 6_14, **6_15** (val), 7_13
 - Label format: **TBD — run NB01 cell 1.3 to confirm indexed vs RGB**
 
-**DOP20 (Hessen/Darmstadt)** — `dummyirl/darmstadt-dop20`
-- Kaggle path: `/kaggle/input/darmstadt-dop20/Darmstadt_dop20_presliced/darmstadt_dop20/images/`
+**DOP20 (Hessen/Darmstadt)** — `harish77718/darmstadt-dop20-presliced`
+- Kaggle path: `/kaggle/input/datasets/harish77718/darmstadt-dop20-presliced/darmstadt_dop20/images/`
 - Files: `dop20_32_474_5532_1_he_y{Y}_x{X}.png` — pre-sliced 256×256 PNG patches, ~1267 files
-- Channel format: **TBD — likely RGB (3ch) not RGBI (4ch) since PNG; NB01 will confirm**
+- Channel format: **TBD — likely RGB (3ch); NB01 will confirm**
 - NB03 implication: patches are already 256px — run each patch directly, no sliding window needed
-
-**Kaggle path rule:** `/kaggle/input/{slug-name}/` — only the part after the `/` in the slug.
-`dummyirl/darmstadt-dop20` → `/kaggle/input/darmstadt-dop20/` (not `/kaggle/input/datasets/dummyirl/...`)
 
 ## Kaggle dataset slugs
 
-| Dataset | Slug | Contents |
+| Dataset | Slug | Kaggle mount path |
 |---|---|---|
-| SAM3 weights | `dummyirl/sam3-weights` | `sam3.pt` checkpoint |
-| Darmstadt DOP20 | `dummyirl/darmstadt-dop20` | Hessen DOP20 patches (RGBI) |
-| Potsdam tiles | `rachanaamraghuthama/rskt-potsdam-test-data` | Potsdam GeoTIFF + labels |
+| SAM3 weights | `dummyirl/sam3-weights` | `/kaggle/input/sam3-weights/` |
+| Hessen DOP20 | `harish77718/darmstadt-dop20-presliced` | `/kaggle/input/datasets/harish77718/darmstadt-dop20-presliced/darmstadt_dop20/images/` |
+| Potsdam ISPRS | `dummyirl/6isprs` | `/kaggle/input/datasets/dummyirl/6isprs/6ISPRS/` |
 
 ## Working style
 
