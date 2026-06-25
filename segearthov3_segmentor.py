@@ -192,13 +192,17 @@ class SegEarthOV3Segmentation(BaseSegmentor):
                     align_corners=False
                 ).squeeze(0)
             
-            # Post-processing
+            # Post-processing: reduce per-synonym logits → per-class logits.
+            # Avoid broadcasting [num_cls, num_queries, H, W] — too large for 16GB GPU.
             if self.num_cls != self.num_queries:
-                seg_logits = seg_logits.unsqueeze(0)
-                cls_index = nn.functional.one_hot(self.query_idx)
-                cls_index = cls_index.T.view(self.num_cls, len(self.query_idx), 1, 1)
-                seg_logits = (seg_logits * cls_index).max(1)[0]
-                seg_pred = seg_logits.argmax(0, keepdim=True)
+                torch.cuda.empty_cache()
+                h, w = seg_logits.shape[-2:]
+                result = torch.full((self.num_cls, h, w), float('-inf'), device=seg_logits.device)
+                for cls_i in range(self.num_cls):
+                    mask = (self.query_idx == cls_i)
+                    if mask.any():
+                        result[cls_i] = seg_logits[mask].max(0)[0]
+                seg_logits = result
 
             seg_pred = torch.argmax(seg_logits, dim=0)
             
