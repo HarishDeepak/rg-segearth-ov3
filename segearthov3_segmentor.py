@@ -123,10 +123,13 @@ class SegEarthOV3Segmentation(BaseSegmentor):
         h_stride, w_stride = stride
         h_crop, w_crop = crop_size
 
-        gaussian_kernel = self._make_gaussian_kernel(h_crop, w_crop, self.device)
+        # Gaussian kernel created on GPU for crop inference, then moved to CPU.
+        # Accumulation tensors live on CPU: a full-tile GPU tensor (queries × H × W)
+        # exceeds VRAM on large tiles (e.g. 41 queries × 6000 × 6000 × 4B ≈ 5.9 GB).
+        gaussian_kernel = self._make_gaussian_kernel(h_crop, w_crop, self.device).cpu()
 
-        preds = torch.zeros((self.num_queries, h_img, w_img), device=self.device)
-        weight_mat = torch.zeros((h_img, w_img), device=self.device)
+        preds = torch.zeros((self.num_queries, h_img, w_img))  # CPU
+        weight_mat = torch.zeros((h_img, w_img))               # CPU
 
         h_grids = max(h_img - h_crop + h_stride - 1, 0) // h_stride + 1
         w_grids = max(w_img - w_crop + w_stride - 1, 0) // w_stride + 1
@@ -143,20 +146,21 @@ class SegEarthOV3Segmentation(BaseSegmentor):
                 x1 = max(x2 - w_crop, 0)
 
                 crop_img = image.crop((x1, y1, x2, y2))
-                crop_seg_logit = self._inference_single_view(crop_img)
+                crop_seg_logit = self._inference_single_view(crop_img)  # GPU
 
                 # Slice kernel for boundary crops smaller than nominal crop size
                 actual_h, actual_w = y2 - y1, x2 - x1
                 g = gaussian_kernel[:actual_h, :actual_w]
 
-                preds[:, y1:y2, x1:x2] += crop_seg_logit * g.unsqueeze(0)
+                # Move crop result to CPU immediately to free VRAM
+                preds[:, y1:y2, x1:x2] += crop_seg_logit.cpu() * g.unsqueeze(0)
                 weight_mat[y1:y2, x1:x2] += g
 
         assert (weight_mat == 0).sum() == 0, "Error: Sparse sliding window coverage."
 
+        preds.div_(weight_mat.unsqueeze(0))
         torch.cuda.empty_cache()
-        preds.div_(weight_mat.unsqueeze(0))  # in-place: avoids allocating a 2nd [N,H,W] tensor
-        return preds
+        return preds.to(self.device)
 
     def predict(self, inputs, data_samples):
         if data_samples is not None:
