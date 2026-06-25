@@ -1,6 +1,6 @@
-agricultural field, farmland
-forest, woodland
-rooftop, building
-road, dirt track
-water body, river
-background, bare soil
+agricultural field
+forest
+rooftop
+road
+water body
+background
