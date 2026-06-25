@@ -1,6 +1,6 @@
-agricultural field, farmland, crop field, arable land
-forest, woodland, tree canopy, mixed forest
-building, rooftop, rural building, farmhouse roof
-road, path, dirt track, country road
-water body, river, pond, lake
-background, bare soil, other land, grassland
+agricultural field
+forest
+rooftop
+road
+water body
+background

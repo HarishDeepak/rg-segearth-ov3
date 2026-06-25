@@ -1,6 +1,6 @@
-impervious surface, road, parking area, tarmac
-building, rooftop, residential building, commercial roof
-low vegetation, grass, lawn, meadow
-tree, treetop, forest canopy, woodland
-car, vehicle, parked car, motor vehicle
-clutter, misc object, background object, undefined object
+impervious surface
+rooftop
+low vegetation
+tree
+car
+clutter
