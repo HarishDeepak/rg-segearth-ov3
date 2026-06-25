@@ -154,7 +154,8 @@ class SegEarthOV3Segmentation(BaseSegmentor):
 
         assert (weight_mat == 0).sum() == 0, "Error: Sparse sliding window coverage."
 
-        preds = preds / weight_mat.unsqueeze(0)
+        torch.cuda.empty_cache()
+        preds.div_(weight_mat.unsqueeze(0))  # in-place: avoids allocating a 2nd [N,H,W] tensor
         return preds
 
     def predict(self, inputs, data_samples):
