@@ -1,6 +1,6 @@
-impervious surface, parking area
-rooftop, building
-low vegetation, grass
-tree, forest canopy
-car, vehicle
-clutter, background
+road
+building
+grass
+tree
+car
+clutter

@@ -7,8 +7,8 @@ model = dict(
     confidence_threshold=0.1,
     bg_idx=5,
 
-    slide_stride=256,
-    slide_crop=512,
+    slide_stride=1024,
+    slide_crop=1024,
 )
 
 # dataset settings
