@@ -1,6 +1,7 @@
-agricultural field
-forest
-rooftop
-road
-water body
-background
+impervious paved surface
+building
+dense tree canopy
+automotive vehicle
+low vegetation, grass
+railway tracks
+paved road
