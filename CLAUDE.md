@@ -75,7 +75,7 @@ SegEarth-OV-3 is a separate method for comparison.
 ## Dataset structures (confirmed)
 
 **Potsdam** — `dummyirl/6isprs`
-- Kaggle path: `/kaggle/input/datasets/dummyirl/6isprs/6ISPRS/`
+- Kaggle path: `/kaggle/input/datasets/dummyirl/6isprs/`
 - Files: `top_potsdam_{tile}_RGB.tif` + `top_potsdam_{tile}_label_noBoundary.tif`
 - Tiles: 5_14, 5_15, 6_13, 6_14, **6_15** (val), 7_13
 - Label format: **TBD — run NB01 cell 1.3 to confirm indexed vs RGB**
@@ -92,7 +92,7 @@ SegEarth-OV-3 is a separate method for comparison.
 |---|---|---|
 | SAM3 weights | `dummyirl/sam3-weights` | `/kaggle/input/sam3-weights/` |
 | Hessen DOP20 | `harish77718/darmstadt-dop20-presliced` | `/kaggle/input/datasets/harish77718/darmstadt-dop20-presliced/darmstadt_dop20/images/` |
-| Potsdam ISPRS | `dummyirl/6isprs` | `/kaggle/input/datasets/dummyirl/6isprs/6ISPRS/` |
+| Potsdam ISPRS | `dummyirl/6isprs` | `/kaggle/input/datasets/dummyirl/6isprs/` |
 
 ## Working style
 
