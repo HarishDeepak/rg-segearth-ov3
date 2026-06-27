@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory)][ValidateSet("nb01","nb02","nb03","nb04")]
+    [Parameter(Mandatory)][ValidateSet("nb01","nb02","nb03","nb04","nb05")]
     [string]$nb
 )
 
@@ -8,6 +8,7 @@ $map = @{
     "nb02" = @{ file = "NB02_potsdam_eval.ipynb"; slug = "harish77718/nb02-potsdam-eval" }
     "nb03" = @{ file = "NB03_hessen_infer.ipynb"; slug = "harish77718/nb03-hessen-infer" }
     "nb04" = @{ file = "NB04_demo.ipynb";         slug = "harish77718/nb04-demo"         }
+    "nb05" = @{ file = "NB05_ptsam_train.ipynb"; slug = "harish77718/nb05-ptsam-train"  }
 }
 
 $notebook = $map[$nb].file

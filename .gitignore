@@ -16,3 +16,25 @@ results/*.csv
 *.pth
 .env
 kaggle.json
+
+# Personal / scratch
+.vscode/
+wf.md
+nb02-potsdam-eval.ipynb
+extra/1.md
+extra/image/
+teammate/
+
+# Push-dir outputs
+notebooks/push/*/results/
+
+# Result extras
+results/*.log
+results/*.txt
+results/*.sh
+results/PotsdamEval/
+results/SegEarth-OV-3/
+results/miniconda/
+results/show_dir/
+results/nb01*/
+results/nb02*/
