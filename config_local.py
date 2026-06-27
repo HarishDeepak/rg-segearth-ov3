@@ -32,7 +32,7 @@ if KAGGLE:
 
     from pathlib import Path as _Path
     # datasets mount under /kaggle/input/datasets/<owner>/<slug>/
-    _hits = list(_Path("/kaggle/input").rglob("sam3.pt"))
+    _hits = [p for p in _Path("/kaggle/input").rglob("sam3.pt") if p.is_file()]
     SAM3_CHECKPOINT = str(_hits[0]) if _hits else (
         "/kaggle/input/datasets/dummyirl/sam3-weights/sam3.pt"
     )

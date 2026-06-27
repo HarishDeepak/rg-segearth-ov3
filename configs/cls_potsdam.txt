@@ -1,6 +1,6 @@
-road
-building
-grass
-tree
-car
-clutter
+impervious surface, road, pavement, paved ground
+building, rooftop, structure
+low vegetation, grass, shrub, lawn, meadow
+tree, forest, canopy
+car, vehicle
+clutter, background
