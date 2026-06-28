@@ -1,0 +1,20 @@
+{
+  "id": "harish77718/nb07-multi-tile-darmstadt",
+  "title": "NB07 Multi-Tile Darmstadt",
+  "code_file": "NB07_multi_tile_darmstadt.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/6isprs",
+    "harish77718/ptsam-soft-prompts",
+    "harish77718/darmstadt-dop20-presliced"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
