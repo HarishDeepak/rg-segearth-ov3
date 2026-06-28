@@ -1,0 +1,18 @@
+{
+  "id": "harish77718/nb05-ptsam-train-v2",
+  "title": "NB05 PTSAM Train v2",
+  "code_file": "NB05_ptsam_trainv2.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/6isprs"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
