@@ -3,4 +3,3 @@ building, rooftop
 low vegetation, grass
 tree
 car, vehicle
-clutter, background
