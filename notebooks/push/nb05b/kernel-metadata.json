@@ -1,0 +1,19 @@
+{
+  "id": "harish77718/nb05b-ptsam-eval",
+  "title": "NB05b PTSAM Eval",
+  "code_file": "NB05b_ptsam_eval.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/6isprs",
+    "harish77718/ptsam-soft-prompts"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
