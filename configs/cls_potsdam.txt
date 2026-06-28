@@ -1,6 +1,6 @@
-impervious surface, road, pavement, paved ground
-building, rooftop, structure
-low vegetation, grass, shrub, lawn, meadow
-tree, forest, canopy
+impervious surface, road
+building, rooftop
+low vegetation, grass
+tree
 car, vehicle
 clutter, background

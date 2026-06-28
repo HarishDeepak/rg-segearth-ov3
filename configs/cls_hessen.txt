@@ -1,7 +1,6 @@
-nadir aerial view of impervious paved surface, asphalt, concrete ground, parking lot
-overhead low-resolution view of building, rooftop, flat roof casting shadow, residential structure
-aerial top-down view of dense tree canopy, forest patch, treetop, woodland
-overhead low-resolution view of automotive vehicle, parked car, automobile seen from above
-nadir view of low vegetation, grassland, lawn, meadow, green ground cover
-aerial view of railway tracks, rail line, train tracks seen from above
-overhead low-resolution view of paved road, urban street, road surface, carriageway
+impervious surface, road, pavement
+building, rooftop
+tree, forest
+car, vehicle
+low vegetation, grass
+railway track
