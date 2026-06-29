@@ -105,6 +105,7 @@ Open `notebooks/NB0X_<name>.ipynb` in VS Code (or Jupyter). Make your changes.
 ```
 
 What this does internally:
+
 1. Copies `notebooks/NB0X_*.ipynb` → `notebooks/push/nb0X/` (Kaggle requires the notebook inside the push folder)
 2. Runs `kaggle kernels push -p notebooks/push/nb0X/` which reads `kernel-metadata.json` for GPU, datasets, etc.
 3. Prints the exact next commands to check status and pull outputs
@@ -127,13 +128,13 @@ Downloads any saved files (PNGs, CSVs, logs) into your local `results/` folder.
 
 ### Kernel slugs
 
-| Notebook | Kaggle slug |
-|----------|-------------|
-| NB01 | `harish77718/nb01-verify-data` |
-| NB02 | `harish77718/nb02-potsdam-eval` |
-| NB03 | `harish77718/nb03-hessen-infer` |
-| NB04 | `harish77718/nb04-demo` |
-| NB05 | `harish77718/nb05-ptsam-train` |
+| Notebook | Kaggle slug                       |
+| -------- | --------------------------------- |
+| NB01     | `harish77718/nb01-verify-data`  |
+| NB02     | `harish77718/nb02-potsdam-eval` |
+| NB03     | `harish77718/nb03-hessen-infer` |
+| NB04     | `harish77718/nb04-demo`         |
+| NB05     | `harish77718/nb05-ptsam-train`  |
 
 ---
 
@@ -142,6 +143,7 @@ Downloads any saved files (PNGs, CSVs, logs) into your local `results/` folder.
 Datasets attached to each notebook are listed in `notebooks/push/nb0X/kernel-metadata.json` under `dataset_sources`.
 
 **Example** (`notebooks/push/nb02/kernel-metadata.json`):
+
 ```json
 {
   "dataset_sources": [
@@ -152,20 +154,19 @@ Datasets attached to each notebook are listed in `notebooks/push/nb0X/kernel-met
 ```
 
 To swap or add a dataset:
+
 1. Find the Kaggle dataset slug (e.g. `username/dataset-name` from its Kaggle URL)
 2. Edit the `dataset_sources` array in the relevant `kernel-metadata.json`
-3. On Kaggle the dataset mounts at `/kaggle/input/<dataset-name>/`  
-   e.g. `dummyirl/6isprs` → `/kaggle/input/6isprs/`  
-   but `harish77718/darmstadt-dop20-presliced` → `/kaggle/input/darmstadt-dop20-presliced/`
+3. On Kaggle the dataset mounts at `/kaggle/input/<dataset-name>/`e.g. `dummyirl/6isprs` → `/kaggle/input/6isprs/`but `harish77718/darmstadt-dop20-presliced` → `/kaggle/input/darmstadt-dop20-presliced/`
 4. Update any hardcoded paths inside the notebook to match
 5. Re-push: `.\kaggle_push.ps1 nb0X`
 
 ### Current dataset slugs
 
-| Slug | What it is | Mount path |
-|------|-----------|------------|
-| `dummyirl/sam3-weights` | SAM3 checkpoint (`sam3.pt`) | `/kaggle/input/sam3-weights/sam3.pt` |
-| `dummyirl/6isprs` | Potsdam ISPRS tiles (RGB + labels) | `/kaggle/input/6isprs/6ISPRS/` |
+| Slug                                      | What it is                            | Mount path                                                          |
+| ----------------------------------------- | ------------------------------------- | ------------------------------------------------------------------- |
+| `dummyirl/sam3-weights`                 | SAM3 checkpoint (`sam3.pt`)         | `/kaggle/input/sam3-weights/sam3.pt`                              |
+| `dummyirl/6isprs`                       | Potsdam ISPRS tiles (RGB + labels)    | `/kaggle/input/6isprs/6ISPRS/`                                    |
 | `harish77718/darmstadt-dop20-presliced` | Hessen DOP20 pre-sliced 256px patches | `/kaggle/input/darmstadt-dop20-presliced/darmstadt_dop20/images/` |
 
 ---
@@ -175,6 +176,7 @@ To swap or add a dataset:
 Prompts are plain text files — one line per class, comma-separated synonyms. SegEarth-OV-3 scores each pixel against all terms and picks the best match.
 
 **Potsdam (6 classes):** `configs/cls_potsdam.txt`
+
 ```
 impervious surface, road, pavement, paved ground
 building, rooftop, structure
@@ -185,6 +187,7 @@ clutter, background
 ```
 
 **Hessen (7 classes):** `configs/cls_hessen.txt`
+
 ```
 nadir aerial view of impervious paved surface, asphalt, concrete ground, parking lot
 overhead low-resolution view of building, rooftop, flat roof casting shadow, residential structure
@@ -196,6 +199,7 @@ overhead low-resolution view of paved road, urban street, road surface, carriage
 ```
 
 **To change prompts:**
+
 1. Edit the relevant `configs/cls_*.txt`
 2. `git add configs/cls_potsdam.txt && git commit -m "..." && git push`
 3. The notebook clones the fork at runtime (`git clone https://github.com/HarishDeepak/SegEarth-OV-3`) — but our `configs/` is actually read from **this repo**, not the fork. The notebook copies `configs/` at startup, so pushing here is enough.
@@ -209,10 +213,10 @@ overhead low-resolution view of paved road, urban street, road surface, carriage
 
 Key config files:
 
-| File | Controls |
-|------|---------|
+| File                       | Controls                                               |
+| -------------------------- | ------------------------------------------------------ |
 | `configs/cfg_potsdam.py` | Potsdam eval: crop size, stride, threshold, class file |
-| `configs/cfg_hessen.py` | Hessen inference: smaller crop for 20cm GSD imagery |
+| `configs/cfg_hessen.py`  | Hessen inference: smaller crop for 20cm GSD imagery    |
 
 Key knobs inside those files:
 
@@ -236,6 +240,7 @@ After editing a config, commit + push the repo, then re-push the notebook.
 
 1. Create `notebooks/NB0X_<name>.ipynb`
 2. Create `notebooks/push/nb0X/kernel-metadata.json`:
+
 ```json
 {
   "id": "harish77718/nb0X-<name>",
@@ -255,6 +260,7 @@ After editing a config, commit + push the repo, then re-push the notebook.
   "kernel_sources": []
 }
 ```
+
 3. Add an entry in `kaggle_push.ps1`:
    - Add `"nb0X"` to `[ValidateSet(...)]`
    - Add `"nb0X" = @{ file = "NB0X_<name>.ipynb"; slug = "harish77718/nb0X-<name>" }` to `$map`
@@ -265,6 +271,7 @@ After editing a config, commit + push the repo, then re-push the notebook.
 ## 10. GitHub sync
 
 This repo (`HarishDeepak/rg-segearth-ov3`) is the source of truth for:
+
 - Notebooks (`notebooks/`)
 - Class prompts (`configs/cls_*.txt`)
 - Model configs (`configs/cfg_potsdam.py`, `configs/cfg_hessen.py`)

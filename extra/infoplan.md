@@ -1,4 +1,5 @@
 # SegEarth-OV-3 Session Reference
+
 _Full explanations preserved — not summarised_
 
 ---
@@ -14,9 +15,7 @@ _Full explanations preserved — not summarised_
 **What we tried and why each failed:**
 
 1. **Legacy API key in `kaggle.json`** — file was correct (`{"username":"harish77718","key":"..."}`, 32-char hex key). But CLI 2.2.2 uses the new `api.kaggle.com` endpoint. When it reads `kaggle.json`, `_authenticate_with_legacy_apikey()` returns True *locally* (just checks that username+key exist in config), but the actual HTTP call to `api.kaggle.com` returns 401 because that endpoint does not accept HTTP Basic auth with legacy keys.
-
 2. **Writing key to `~/.kaggle/access_token`** — made things worse. `get_access_token_from_env()` in kagglesdk reads this file and sends its contents as a Bearer token (`Authorization: Bearer <key>`). A 32-char API key is not an OAuth Bearer token, so `api.kaggle.com` rejects it with 401. Meanwhile this path is checked BEFORE the legacy key path, so the legacy key never even gets tried properly.
-
 3. **KAGGLE_USERNAME + KAGGLE_KEY env vars** — same result. The new `api.kaggle.com` endpoint just doesn't support legacy key auth at all regardless of how it's supplied.
 
 **Why `kaggle auth login` (first attempt) showed "already logged in" but still failed:**
@@ -26,10 +25,12 @@ There was already a stale OAuth token cached in `~/.kaggle/credentials.json` fro
 `kaggle.json` still had the `key` field. `_authenticate_with_legacy_apikey()` returned True because username+key were present, and the code returned early — never reaching `_authenticate_with_oauth_creds()` which would have used the fresh OAuth credentials from `credentials.json`. The legacy key path "wins" and then fails at the server.
 
 **Final fix:**
+
 1. Run `kaggle auth login --force` → fresh OAuth token → saved to `~/.kaggle/credentials.json`
 2. Delete or remove the `key` field from `~/.kaggle/kaggle.json` (keep only `username`) so `_authenticate_with_legacy_apikey()` returns False, and the code falls through to OAuth credentials
 
 **Auth flow in CLI 2.2.2 source (confirmed by reading kaggle_api_extended.py):**
+
 ```python
 def authenticate(self):
     self._load_config()  # reads kaggle.json
@@ -75,6 +76,7 @@ def authenticate(self):
 ```
 
 Known `machine_shape` values:
+
 - `NvidiaTeslaT4` — T4 x2 (what we want)
 - `NvidiaTeslaP100` — P100 (the default when only `enable_gpu: true`)
 
@@ -95,7 +97,8 @@ From `teammate/segearth03 (4).ipynb` — this ran on ALL 6 Potsdam tiles as vali
 |       Class        |  IoU  |  Acc  | Fscore | Precision | Recall |
 +--------------------+-------+-------+--------+-----------+--------+
 | impervious_surface | 75.97 | 84.82 | 86.34  |   87.92   | 84.82  |
-|      building      | 86.13 | 92.44 | 92.55  |   92.66   | 92.44  |
+|      building      | 86.13 | 92.44 
+| 92.55  |   92.66   | 92.44  |
 |   low_vegetation   | 64.92 | 92.27 | 78.73  |   68.66   | 92.27  |
 |        tree        | 46.02 | 47.44 | 63.04  |   93.92   | 47.44  |
 |        car         | 79.98 | 98.47 | 88.88  |   80.99   | 98.47  |
@@ -142,6 +145,7 @@ Ground truth label 5  →  4
 ```
 
 Our NB02 label conversion cell used **0-indexed mapping (0–5)**:
+
 ```python
 RGB_TO_IDX = {
     (255, 255, 255): 0,  # impervious surface  ← THIS MAPS TO 255 (IGNORED)
@@ -174,10 +178,12 @@ And there IS no GT class 5 in this setup — so model class 5 ("clutter") never 
 ### Why It LOOKED Good Visually Despite 3.69% mIoU
 
 The visualization (NB02 cell 113c5d9f) shows:
+
 - The model's prediction output, colored by its class palette
 - The GT, colored by the PALETTE array
 
 The model IS detecting real buildings and roads spatially — the shapes and boundaries are correct. The visualization doesn't compare against GT inline — it just shows each as a separate panel colored by class index. So:
+
 - You see a panel that looks like a building-shaped prediction colored blue → looks correct
 - You see another panel with the GT buildings colored blue → also looks correct
 - But the MODEL thinks those blue regions are one class and the GT has them as a different class index
@@ -224,6 +230,7 @@ Added safety check: if the label already has correct 1-indexed values (e.g. re-r
 ### Also Fixed: cls_potsdam.txt Prompts
 
 **Old (wrong/too narrow):**
+
 ```
 road          ← impervious surface includes parking lots, paths, not just roads
 building
@@ -234,6 +241,7 @@ clutter
 ```
 
 **New (better aerial alignment):**
+
 ```
 impervious surface, road, pavement, paved ground
 building, rooftop, structure
@@ -254,6 +262,7 @@ The first class mismatch ("road" vs "impervious surface") was causing the model 
 NB03 does **not** have the label indexing bug — it is inference-only with no ground truth comparison. `reduce_zero_label` is irrelevant. It just runs SAM3 and saves colored prediction PNGs.
 
 **Current config:**
+
 - `STITCH_REGION = True` → runs all ~289 non-overlapping patches from the 17×17 grid
 - `N_SAMPLE = 100` → ignored when `STITCH_REGION=True`
 - `slide_crop=512`, patch size = 256×256 PNG inputs
@@ -285,6 +294,7 @@ OV-1 uses CLIP ViT-B/16 + SimFeatUp upsampler + cosine similarity. This IS fine-
 Teammate got 7.9/10 visual quality on Darmstadt using OV-3 with 12 single-name classes. Our GeoPrompt supervised method got 6.7/10. This means training-free OV-3 already beats a supervised method on the visual quality metric. The highest-leverage path is therefore **better prompts**, not PEFT.
 
 **5 tuning knobs already identified for OV-3 (all training-free):**
+
 1. Text aliases — biggest lever, teammate used single names only
 2. `prob_thd` sweep (default 0.0, try 0.2, 0.4, 0.5)
 3. `use_presence_score=False` for rare classes (car, water, clutter)
@@ -301,6 +311,7 @@ Teammate got 7.9/10 visual quality on Darmstadt using OV-3 with 12 single-name c
 
 **Why we should skip it for our case:**
 SAM3 already upsamples internally to 1008×1008 regardless of input size — it does this before the backbone processes the image. So if we pre-upsample 256→1008 externally, we're doing redundant bilinear interpolation before SAM3's own internal resize. The result:
+
 - Creates a regular bilinear interpolation grid — SAM3's attention sees fake periodic texture patterns, not real pixels
 - Large uniform areas (crop fields, roads) get blurry halos at upsampled edges that the model misinterprets as class boundaries
 - No extra information is created — bilinear cannot invent missing 20cm GSD detail
@@ -324,6 +335,7 @@ Evaluated 80-class open-vocabulary detection on aerial data. Adding explicit spa
 **What to change in cls_hessen.txt:**
 
 Current:
+
 ```
 impervious surface, road, pavement, paved ground
 building, rooftop, structure
@@ -331,6 +343,7 @@ building, rooftop, structure
 ```
 
 With viewpoint descriptors:
+
 ```
 nadir aerial view of road, paved surface, impervious ground, asphalt
 overhead view of building rooftop, flat roof, residential roof casting shadow
@@ -371,6 +384,7 @@ Average these 3 text embeddings → much broader, more robust semantic manifold.
 **Paper:** "Prompt-Tuning SAM: From Generalist to Specialist with only 2,048 Parameters and 16 Training Images" — CVPRW 2025
 
 **What SAM3's architecture looks like:**
+
 ```
 Input image
     ↓
@@ -399,6 +413,7 @@ They are NOT text. They are learnable floating-point vectors (same dimensionalit
 Think of it like this: you're adding a few extra "hint" vectors alongside the text description. During training on Potsdam, those hint vectors learn to encode "how aerial imagery at 20cm GSD looks when you decode it into masks" — knowledge that the original SAM3 didn't have because it was trained on natural images.
 
 **Why decoder-only tuning:**
+
 - The image encoder (PE-L+, 307M params) learned to extract general visual features from 1 billion training images. This is incredibly valuable and you don't want to corrupt it with 5 Potsdam tiles.
 - If you touch the encoder, it will very quickly overfit to Potsdam's specific textures (red rooftops, grey cobblestones, specific German urban layouts) and FORGET everything else → catastrophic forgetting → terrible on any other German city
 - The mask decoder is lightweight and only needs to learn "given these features from PE-L+, how do I draw accurate boundaries for aerial imagery". This is a much simpler adaptation that 2,048 parameters can handle on 5 images without overfitting
@@ -409,6 +424,7 @@ This is roughly equivalent to a single 64×32 weight matrix, or a few small embe
 For comparison: a single attention head in a transformer typically has 3 weight matrices of ~(768×768) = ~1.8M parameters each. PTSAM's entire trainable budget is ~0.001× that.
 
 **What training looks like:**
+
 ```python
 # Freeze everything
 for param in sam3.image_encoder.parameters():
@@ -426,10 +442,10 @@ for epoch in range(N_EPOCHS):
         if random.random() < 0.30:
             img = F.interpolate(img, scale_factor=0.25, mode='bilinear')
             img = F.interpolate(img, size=original_size, mode='bilinear')
-        
+      
         # Forward pass — soft_prompts injected into cross-attention
         pred = sam3.forward_with_soft_prompts(img, soft_prompts)
-        
+      
         loss = cross_entropy(pred, label, ignore_index=255)
         loss.backward()
         optimizer.step()  # only updates soft_prompts
@@ -470,6 +486,7 @@ At stitch time: produce TWO outputs from the same prediction array:
 ```
 
 **COARSE_MAP (sketch for Hessen):**
+
 ```python
 COARSE_MAP = {
     "road":              "impervious surface",
@@ -542,6 +559,7 @@ Final prediction: only classes that are actually there, with accurate prompts
 TMPA paper (CVPR 2026) uses LLM-generated prompts but with no geospatial grounding — it just generates generic descriptions from class names. Combining OSM grounding (know WHICH classes are in THIS tile) + LLM (generate aerial descriptions for only those classes) + presence head filtering (auto-remove false positives) is a new approach not published yet.
 
 **What you'd need to implement it:**
+
 1. `overpy` or `requests` library + Overpass API query (free, no auth needed)
 2. OSM tag → class name mapping dict
 3. Any LLM API call (Claude, GPT-4, Gemini) with the right system prompt
