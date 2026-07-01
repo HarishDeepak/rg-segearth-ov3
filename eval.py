@@ -1,4 +1,8 @@
 import os
+os.environ["MPLBACKEND"] = "Agg"
+import matplotlib
+matplotlib.use("Agg", force=True)
+
 import os.path as osp
 import argparse
 import openpyxl
@@ -13,6 +17,7 @@ import segearthov3_segmentor
 import segearthov3_change_detector
 import custom_datasets
 import custom_transforms
+import custom_metrics
 
 
 def parse_args():

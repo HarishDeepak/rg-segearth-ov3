@@ -1,5 +1,6 @@
-impervious surface, road
-building, rooftop
-low vegetation, grass
+road
+building
+grass
 tree
-car, vehicle
+car
+clutter
