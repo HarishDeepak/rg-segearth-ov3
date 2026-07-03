@@ -4,6 +4,14 @@ A separate, notebook-first side project inside this repo. It studies cyclist
 infrastructure pain points using **OpenStreetMap road-network data only** —
 it does not use orthophotos, GPUs, or SegEarth-OV-3.
 
+## Result
+
+For a locked study area in central Darmstadt (Rheinstrasse corridor), 12 of
+28 road edges are unprotected primary/secondary roads (no `cycleway` tag).
+The top-ranked pain points are on **Hügelstraße** and **Neckarstraße** —
+see `data/darmstadt_rheinstrasse_arterial_pain_points.geojson` for the
+ranked list and coordinates.
+
 ## Workflow
 
 - **Data source**: OpenStreetMap (via OSMnx), not the DOP20 orthophoto imagery
@@ -47,6 +55,10 @@ congestion at commit time. The underlying data files on disk
 
 - **Phase 1** — repo/folder scaffold, dependency setup (done)
 - **Phase 2** — OSM pull, highway/cycleway tagging, unprotected flagging,
-  pain-point scoring/ranking, QGIS export (done)
-- **Phase 3** — only if needed later: fuse with SegEarth-OV-3 segmentation
-  output, validate ranked pain points in QGIS against orthophoto imagery
+  pain-point scoring/ranking, QGIS-ready export (done)
+- **Phase 3 (next, manual)** — load `data/darmstadt_rheinstrasse_arterial.geojson`
+  and `data/darmstadt_rheinstrasse_arterial_pain_points.geojson` into QGIS,
+  style the pain-points layer by `pain_score`, overlay on a basemap or the
+  Darmstadt orthophoto, export one map image
+- **Phase 4 (optional, later)** — fuse with SegEarth-OV-3 segmentation output
+  from the main repo for a combined OSM + imagery pain-point signal
