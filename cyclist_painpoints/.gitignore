@@ -1,3 +1,11 @@
 !/data/
 !/data/**
 notebooks/cache/
+
+# Orthophoto imagery (large, not our output, not for redistribution) --
+# load these locally in QGIS from your own DOP20 download instead.
+data/*.jpg
+data/*.jgw
+data/*.jpg.aux.xml
+data/*.tif
+data/*.tiff
