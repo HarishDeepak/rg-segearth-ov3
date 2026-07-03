@@ -3,6 +3,35 @@
 Finding where cyclists are exposed to fast, unprotected traffic — using
 OpenStreetMap road-network data only, validated in QGIS.
 
+This project looks for roads that may feel unsafe or uncomfortable for cyclists by using OpenStreetMap road data.
+
+## Problem Statement
+
+Cyclists often have to ride on roads that are fast, busy, and not protected by bike lanes or other cycling infrastructure. OpenStreetMap contains road and cycling tags, but it does not directly say which roads are the biggest problems for cyclists. This project tries to find those roads for one locked study area.
+
+## Goal
+
+The goal is to identify road segments that:
+- are classified as primary, secondary, or tertiary roads
+- do not have cycling protection, such as a bike lane or cycle track
+- are likely to be the most important places to look first when improving cycling safety
+
+## What This Project Does
+
+This project:
+- locks one study area using a fixed bounding box
+- downloads the road network from OpenStreetMap using OSMnx
+- reads the highway and cycleway tags for each road segment
+- marks roads as unprotected when they have no cycling infrastructure
+- saves the results as CSV, GeoJSON, and an HTML map preview
+
+## Important Notes
+
+- This project uses OpenStreetMap data only
+- It does not use orthophotos or image segmentation
+- It is CPU-only
+- The bbox is kept fixed so results stay comparable across runs
+
 ## Goal
 
 Cities publish road networks, but "which roads are dangerous for cyclists"
