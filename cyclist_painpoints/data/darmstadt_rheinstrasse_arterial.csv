@@ -1,0 +1,29 @@
+u,v,key,osmid,highway,maxspeed,name,oneway,reversed,length,lanes,width,ref,highway_raw,cycleway_raw,cycleway,unprotected
+447903,531705,0,6913118,primary,50,Hügelstraße,False,False,18.46204784246714,,,,primary,,,True
+447903,334212218,0,"[1103575783, 1103575784, 1103575785, 6912972, 1429406544]",primary,,Hügelstraße,False,False,165.67739343893126,"['4', '2']","['12.5', '13.5', '7']",,primary,,,True
+531705,447903,0,6913118,primary,50,Hügelstraße,False,True,18.46204784246714,,,,primary,,,True
+531705,608030,0,"[863833538, 148749644]",secondary,50,Neckarstraße,True,False,118.782693891292,"['1', '3']","['7', '6.5']",B 3,secondary,,,True
+531705,356292222,0,1429096407,primary,50,Hügelstraße,False,False,32.566833935135605,3,,,primary,,,True
+586242,447903,0,54899797,primary,50,Neckarstraße,True,False,118.96671584621828,2,,B 3,primary,,,True
+586242,608030,0,54899801,residential,50,Elisabethenstraße,False,False,16.688496551315954,,,,residential,,,False
+586242,586245,0,"[1429406545, 778002721]",residential,30,Elisabethenstraße,False,True,168.74830100802265,,,,residential,,,False
+586245,334212218,0,"[1031109963, 148701582]",residential,30,Landgraf-Philipps-Anlage,False,False,126.55205363963212,,"['8.7', '6.5']",,residential,,,False
+586245,586242,0,"[1429406545, 778002721]",residential,30,Elisabethenstraße,False,False,168.74830100802265,,,,residential,,,False
+608030,608049,0,54899793,secondary,50,Neckarstraße,True,False,111.07634611368935,1,5.5,B 3,secondary,,,True
+608030,586242,0,54899801,residential,50,Elisabethenstraße,False,True,16.688496551315954,,,,residential,,,False
+608030,255302416,0,"[1429406546, 54899782]",unclassified,30,Elisabethenstraße,False,False,144.4650665361009,2,,,unclassified,,,False
+608049,608053,0,"[50431328, 179041226]",residential,30,Adelungstraße,False,"[False, True]",154.18752768683177,2,,,residential,,,False
+608053,608055,0,4083977,residential,30,Saalbaustraße,True,False,111.6681784931928,,,,residential,,,False
+608053,608049,0,"[50431328, 179041226]",residential,30,Adelungstraße,False,"[False, True]",154.18752768683174,2,,,residential,,,False
+608055,255302416,0,54899782,unclassified,30,Elisabethenstraße,False,True,6.20814957986862,2,,,unclassified,,,False
+608057,255302416,0,23575112,residential,30,Saalbaustraße,False,False,116.67121323870683,,,,residential,,,False
+608057,356292222,0,"[381976297, 1103575781, 1103575782]",primary,50,Hügelstraße,False,True,106.57810051672655,4,,,primary,,,True
+12635604,586242,0,54899788,primary,50,Neckarstraße,True,False,110.72475560329077,1,,B 3,primary,,,True
+12635604,608049,0,178455882,residential,50,Adelungstraße,True,False,16.29411827044375,1,,,residential,,,False
+255302416,608055,0,54899782,unclassified,30,Elisabethenstraße,False,False,6.20814957986862,2,,,unclassified,,,False
+255302416,608057,0,23575112,residential,30,Saalbaustraße,False,True,116.67121323870681,,,,residential,,,False
+255302416,608030,0,"[1429406546, 54899782]",unclassified,30,Elisabethenstraße,False,True,144.46506653610086,2,,,unclassified,,,False
+334212218,586245,0,"[1031109963, 148701582]",residential,30,Landgraf-Philipps-Anlage,False,True,126.55205363963212,,"['8.7', '6.5']",,residential,,,False
+334212218,447903,0,"[1103575783, 1103575784, 1103575785, 6912972, 1429406544]",primary,,Hügelstraße,False,True,165.67739343893132,"['4', '2']","['12.5', '13.5', '7']",,primary,,,True
+356292222,608057,0,"[381976297, 1103575781, 1103575782]",primary,50,Hügelstraße,False,False,106.57810051672655,4,,,primary,,,True
+356292222,531705,0,1429096407,primary,50,Hügelstraße,False,True,32.566833935135605,3,,,primary,,,True

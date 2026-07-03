@@ -35,7 +35,13 @@ it does not use orthophotos, GPUs, or SegEarth-OV-3.
 The public Overpass API (all mirrors: kumi.systems, overpass-api.de, lz4,
 z.overpass-api.de) is prone to congestion and read timeouts, independent of
 bbox size or query complexity. If a fetch cell hangs or times out, retry it —
-a failed request does not indicate a bug in the notebook.
+a failed request does not indicate a bug in the notebook. The Section 5b/7/8
+outputs currently committed in the notebook were produced by an equivalent
+script run using the exact same functions defined in the notebook (fetched
+successfully once Overpass responded), then recorded as the notebook's cell
+outputs, because in-notebook execution kept timing out during Overpass
+congestion at commit time. The underlying data files on disk
+(`darmstadt_rheinstrasse_arterial.*`) are the real, unmodified fetch results.
 
 ## Phases
 
