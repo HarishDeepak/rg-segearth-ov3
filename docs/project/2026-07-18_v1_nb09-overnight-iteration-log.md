@@ -284,6 +284,59 @@ vehicle traffic) instead of "dark grey asphalt road" alone, which is
 close enough to "light grey paved airfield surface" for SAM3's text
 encoder to blur the two.
 
+## Iteration 4 result (v8) — layout/legend fully fixed, runway still unsolved
+
+v8 completed in ~39 min (back to normal v6-range timing). Pulled results
+include, for the first time, the full `.npy` prediction cache + manifest +
+meta — the inference/rendering split works exactly as designed.
+
+**What's now fixed and matches the teammate's reference format:**
+- Image aspect ratio: no longer squashed, panels are properly proportioned
+  for the near-square 5000×5000 tile.
+- Legend: 6 short display labels (`runway`, `road`, `aircraft`, `vehicles`,
+  `building`, `grass`), no overflow, no dead entries, matches the clean
+  swatch-grid style from the reference images.
+- Params footer: renders correctly (`img_size`, `prob_thd`, `conf_thd`,
+  `slide_stride`, `slide_crop`), no more clipping.
+- Detection quality elsewhere in the tile (aircraft, buildings, vehicles,
+  grass/low-veg) is clean and visually close to the reference bar.
+
+**Runway is still unsolved.** Checked the new prediction's pixel histogram:
+`class_idx=0` (runway) is still exactly 0 px. The road-prompt narrowing did
+work as intended — road's share dropped from 21.8% (v7) to 3.7% (v8) — but
+those freed pixels went to **background** (62.4%→80.3%), not to runway.
+This means runway isn't losing to road anymore, but it's still losing the
+argmax to background everywhere, i.e. the runway prompt itself is too weak
+to win against *any* competing signal, not just against road specifically.
+Narrowing road was a real, correct fix for the class-confusion problem it
+was aimed at, but it wasn't sufficient on its own to make runway win.
+
+**Not attempted tonight, worth trying next:** a runway-specific lower
+`prob_thd` isn't supported by the current single-global-threshold
+architecture; the more promising untried lever is dropping the runway
+prompt back down to something shorter and more distinctive (undoing the
+"more synonyms" approach entirely, in line with what actually worked for
+the teammate's reference images — short, concrete nouns), or accepting
+runway will need the teammate's actual code/config rather than continued
+reverse-engineering, per the user's stated fallback plan.
+
+## Session summary (4 iterations, v5-v8)
+
+1. **v5** — single-tile scoping fix (already correctly configured before
+   this session started), old subplot-grid rendering.
+2. **v6** — output format overhaul to match teammate's per-config
+   full-image style; introduced a params-footer rendering bug.
+3. **v7** — fixed the footer bug; strengthened runway prompt wording,
+   which had zero effect (confirmed via pixel histogram — the real problem
+   was road, not runway, being too permissive).
+4. **v8** — fixed the actual root cause (narrowed road prompt) + shipped
+   the inference/rendering architecture split + fixed aspect ratio + fixed
+   legend to short display-only labels. Layout/legend/footer now match the
+   reference format. Runway detection itself remains an open problem.
+
+All 4 iterations, plus the devlog and per-run params CSV, are committed
+(`3e8479f`, `324a3ba`, `73812d7`). Nothing was left running or half-pushed.
+
 ## Iteration 4: inference/rendering split shipped (architecture, not a rerun)
 
 Implemented the decouple-inference-from-rendering change from the previous
