@@ -137,6 +137,55 @@ Pushed as kernel version 6 (iteration 2), still targeting `TARGET_TILE=
 dop20_32_468_5543_1_he` (single tile, per the "one tile at a time" fix from
 earlier tonight).
 
+## Iteration 2 result (v6) — new format confirmed, one rendering bug found
+
+v6 completed clean in ~2183s (~36 min), no errors, all 13 individual
+full-tile images saved successfully (`results` pulled to
+`notebooks/push/nb09/output_v6/output/`). Format overhaul worked as
+intended — each config is its own RGB|overlay(α=0.6) panel with its own
+legend row, matching the teammate's layout.
+
+**Bug found:** the params footer text (`img_size/prob_thd/conf_thd/
+slide_stride/slide_crop`) is missing from every rendered image — blank
+space where it should be. Root cause: `fig.text(0.5, -0.02, ...)` places
+the text just below the axes in figure-fraction coordinates, but
+`savefig(..., bbox_inches="tight")` recomputes the bounding box from
+artist extents and appears to be clipping this negative-y text before it's
+captured. Fix for iteration 3: move the footer inside the figure's
+positive coordinate space (e.g. reserve bottom margin via
+`plt.subplots_adjust` and place text at a small positive y, same pattern
+NB09's old Part B/C legend row already used successfully) instead of
+placing it off-canvas and relying on `bbox_inches="tight"` to include it.
+
+**Ablation findings, now visible at full resolution (confirms v5's
+smaller-scale read):**
+
+- **Window-size (Image A):** crop=768/stride=576 renders the solar-panel
+  roof array as a clean, well-defined blue rectangle; crop=1500/stride=1200
+  loses definition on the same roof (smaller, patchier blue region) and the
+  plane cluster on the right edge shows less crisp boundaries. Real,
+  visible crop-size effect — smaller crop = higher effective resolution on
+  fine structure, consistent with the project's known DOP20 resolution-gap
+  reasoning (CLAUDE.md rule 2).
+- **Prompt wording (Image C):** single-word prompts (`"runway"` alone)
+  cause the tarmac/runway area to render as a flat white/light-grey blob —
+  wrong, and buildings show speckled color bleed (blue/green/cyan noise)
+  that isn't present in the multi-synonym baseline. Confirms v5's grid-view
+  finding, now unambiguous at full resolution.
+- **Threshold (Image B):** `confidence_threshold=0.3` (vs. baseline 0.1)
+  produces the same runway blob failure as single-word prompts, plus
+  speckled building noise — conf_thd=0.3 is too strict for this tile.
+  `prob_thd` sweep (0.05/0.1/0.3, free) showed comparatively little visible
+  difference, consistent with v5.
+
+**Plan for iteration 3:** fix the params-footer rendering bug (functional
+fix, not a quality/prompt change), keep `confidence_threshold` at the
+0.1 baseline (0.3 confirmed worse), and address the runway/tarmac
+white-blob problem more directly — try tightening the multi-synonym
+wording further with concrete surface-texture cues per the v5 finding
+(what worked at prob_thd=0.3 in v1's original rework), rather than
+touching crop/stride (already validated in the working zone).
+
 ## Iteration 1 — v5 push, tile `dop20_32_468_5543_1_he` (Frankfurt airport)
 
 - **Pushed:** 2026-07-18 ~22:48
