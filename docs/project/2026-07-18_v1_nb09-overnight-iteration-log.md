@@ -186,6 +186,118 @@ wording further with concrete surface-texture cues per the v5 finding
 (what worked at prob_thd=0.3 in v1's original rework), rather than
 touching crop/stride (already validated in the working zone).
 
+## Iteration 3 (v7) + architecture change: decouple inference from rendering
+
+While v7 (footer fix + strengthened runway prompt) was still running, user
+compared v6's baseline output directly against the teammate's reference for
+the *same tile* (`468_5543`) and flagged real problems beyond the footer bug:
+
+1. **Runway/apron/taxiway class renders as fully transparent background**,
+   not just weak — the whole tarmac area has zero color in our output where
+   the reference shows a clean grey `runways` fill. Confirms this is a
+   detection failure (losing to background), not a rendering bug.
+2. **Image aspect ratio was squashed** — our output was 2893×1540 (very
+   wide/short) against a near-square 5000×5000 source tile; caused by a
+   fixed `figsize=(20,15)` that didn't account for the tile's actual aspect
+   ratio, compounded by `subplots_adjust(bottom=...)`.
+3. **Legend had dead entries** — `box, container, cargo` and `tree, forest`
+   never appear in this scene at all, just cluttering the legend for zero
+   pixels of coverage.
+4. **Legend labels should be short**, matching the teammate's reference
+   exactly (`runway`, `road`, `vehicles`, not the multi-synonym grounding
+   strings) — user pointed at a second reference image
+   (`dop20_32_479_5550_1_he` water/port scene) showing this explicitly:
+   6-9 short class names per legend, clean 5-column swatch grid, no
+   redundant α= text outside the panel title.
+
+**Architecture change (user's suggestion, adopted):** decouple SAM3
+inference from image rendering. Previously `render_result()` ran inside the
+same GPU pass as `run_sliding_window()`, so every legend/layout/color tweak
+required a full ~30-60 min Kaggle rerun. Now:
+
+- Section 3 (`run_image()`) only calls SAM3 and saves raw prediction arrays
+  (`output/preds/{stem}_{tag}.npy`, uint8 label maps) plus a
+  `output/manifest.json` (one row per config: stem, tag, prob_thd, conf_thd,
+  slide_stride, slide_crop) and per-tile `output/preds/{stem}_meta.json`
+  (display labels, color map, img_size). No matplotlib, no plotting.
+- New Section 4 is a **separate, GPU-free cell** that reads the manifest +
+  npy files + meta and renders every image. This cell is now the only thing
+  that needs to change for legend/layout/color fixes — rerun it alone in the
+  Kaggle notebook UI, no repush needed for pure rendering changes.
+- Also added a `display` field to each tile's config in `IMAGE_CONFIGS`:
+  short 1-2 word legend labels, kept completely separate from `multi` (the
+  long synonym strings sent to SAM3 for grounding) — a full multi-synonym
+  string can now never leak into a legend again.
+- Dropped `box, container, cargo` and `tree, forest` from the `468_5543`
+  tile's class list (6 classes now, was 8) since neither appears in this
+  scene.
+- Fixed the aspect-ratio squash: `render_result()` now derives `figsize`
+  from the actual tile's `w/h` ratio instead of a fixed 20×15.
+
+**Still open going into iteration 4:** whether the strengthened runway
+prompt (v7, still running as of this note) fixes the background-dropout
+problem, or whether the class needs a different approach entirely (e.g.
+lower `prob_thd` specifically for this class, or accepting the teammate's
+offer to share their template/code directly rather than continuing to
+reverse-engineer prompt wording from visual comparison alone — user raised
+this as a fallback if the wording fixes don't converge).
+
+## Iteration 3 result (v7) — runway fix did NOT work; root cause identified
+
+v7 completed (~75 min — longer than v6's 36 min, but the strengthened
+runway prompt just adds more words to encode per crop, not more crops, so
+this is plausibly normal variance rather than a hang; no errors in the log).
+
+**The strengthened runway wording did not fix anything** — visually
+identical to v6, entire runway/tarmac area still fully uncolored. Checked
+the actual per-class pixel histogram of the saved `.npy` prediction
+(`class_idx=0` is the runway class, first in `multi`):
+
+```
+class_idx=0 (runway):  0 px        (0.0%)   <- completely absent
+class_idx=1 (road):    5,457,843 px (21.8%)
+class_idx=2 (aircraft):  330,427 px  (1.3%)
+class_idx=3 (car):       216,755 px  (0.9%)
+class_idx=5 (building):   99,684 px  (0.4%)
+class_idx=7 (grass):   3,294,044 px (13.2%)
+class_idx=255 (bg):   15,601,247 px (62.4%)
+```
+
+**Root cause identified: this is class confusion, not coverage/threshold.**
+The runway class isn't losing to background at the margins (which more
+descriptive wording could fix) — it's losing 100% of its pixels to the
+`road` class outright. "Paved road, street, dark grey asphalt road" is
+out-competing "airfield runway, taxiway, apron..." on every runway/tarmac
+pixel, even though those surfaces are visually lighter grey than the road
+prompt describes. Adding more runway synonyms (v6→v7) couldn't fix this
+because the failure mode is the argmax picking road over runway, not
+runway falling below `prob_thd`. This explains why the reference set's
+"short prompts win" pattern didn't transfer to this class either — the
+problem was never about the runway prompt's specificity, it was about the
+**road prompt being too broad** and greedily claiming any grey paved
+surface, runway included.
+
+**Fix for iteration 4:** narrow the `road` class prompt so it no longer
+describes generic "paved" surfaces — anchor it to road-specific cues that
+don't apply to a runway/apron (lane markings, curbs/sidewalks alongside,
+vehicle traffic) instead of "dark grey asphalt road" alone, which is
+close enough to "light grey paved airfield surface" for SAM3's text
+encoder to blur the two.
+
+## Iteration 4: inference/rendering split shipped (architecture, not a rerun)
+
+Implemented the decouple-inference-from-rendering change from the previous
+note. Section 3 (`run_image()`) now only calls SAM3 and saves
+`output/preds/{stem}_{tag}.npy` + `output/manifest.json` +
+`output/preds/{stem}_meta.json` — no plotting. New Section 4 is a
+standalone GPU-free cell that reads those files and renders every image;
+edit that cell alone and rerun it in the Kaggle UI (no repush, no SAM3,
+no ~40-75 min wait) for any future legend/layout/color-only change.
+Also: added `display` (short legend labels, kept separate from `multi`,
+the long grounding strings — a full synonym string can no longer leak into
+a legend) and dropped the two dead-weight classes (`box, container, cargo`,
+`tree, forest`) that never appear in this tile.
+
 ## Iteration 1 — v5 push, tile `dop20_32_468_5543_1_he` (Frankfurt airport)
 
 - **Pushed:** 2026-07-18 ~22:48
