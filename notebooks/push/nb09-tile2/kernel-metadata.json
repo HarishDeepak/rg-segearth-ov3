@@ -1,0 +1,20 @@
+{
+  "id": "harish77718/nb09-tile2-475-5550",
+  "title": "NB09 Tile2 475 5550",
+  "code_file": "NB09_zeroshot_sensitivity.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/frankfurt-dot20",
+    "dummyirl/darmstadt-dop20",
+    "dummyirl/vogelsbergkreis-lautertal-dop20"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
