@@ -351,6 +351,68 @@ the long grounding strings — a full synonym string can no longer leak into
 a legend) and dropped the two dead-weight classes (`box, container, cargo`,
 `tree, forest`) that never appear in this tile.
 
+## Tile 4 — `DOP20_32_525_5604_1_he` (Vogelsbergkreis-Lautertal solar farm)
+
+Added as a 4th tile for direct comparability against a known-good reference
+result on this exact tile. Uses per-tile baseline override
+(`prob_thd=0.05, confidence_threshold=0.35, slide_crop=1500, slide_stride=1200`)
+instead of the shared default, plus its own class list: building, grass,
+road, vehicles, trees, solar panel.
+
+**v10/v11 push mistakes (both non-fatal, caught before wasting significant
+GPU time):**
+- v10 was pushed with the push-folder copy still containing stale tile-2
+  code (forgot to sync `notebooks/NB09_zeroshot_sensitivity.ipynb` →
+  `notebooks/push/nb09/` before pushing) — caught via `grep -c` diff between
+  the two copies, fixed by syncing and re-pushing as v11.
+- v11 failed immediately with `NOT FOUND: DOP20_32_525_5604_1_he.jpg` —
+  the `vogelsbergkreis-lautertal-dop20` dataset was never added to
+  `kernel-metadata.json`'s `dataset_sources`, so Kaggle never mounted it.
+  Fixed by adding the dataset slug, re-pushed as v12.
+- v10 also turned into an orphaned session (stuck `RUNNING` on Kaggle's own
+  dashboard well past normal duration) even though it had already been
+  superseded — cancelled manually via the website once noticed, since no
+  API-level stop exists.
+
+**v12 result:** completed cleanly, all 13 configs saved. Baseline pixel
+histogram — building 0.5%, grass 61.6%, road 20.1%, vehicles 0.0%, trees
+5.4%, solar panel 12.1%, background 0.3%. No class-confusion problem like
+tile 1's runway — every class present, background near-zero, visually
+matches the reference's detection quality. The one gap: v12 ran before the
+rendering-layout fix (exact match to the team's own plotting code, see
+below) landed, so its output PNGs still have the old wide-margin layout.
+Since inference and rendering are now decoupled, re-rendering these 13
+predictions with the corrected layout doesn't require a Kaggle rerun — it
+only needs the source tile image, which isn't available locally (only the
+team's own pre-rendered output PNG is), so this is left as a known gap
+rather than forcing another GPU run for a cosmetic-only fix on an already-
+successful tile.
+
+## Rendering layout — matched to the team's exact plotting code
+
+The team shared their own exact matplotlib plotting code (verbatim, via
+chat). Replaced NB09's `render_result()` with a line-for-line match:
+`figsize=(20, 12)`, `subplots_adjust(left=0.01, right=0.99, top=0.95,
+bottom=0.15, wspace=0.01)`, legend at `bbox_to_anchor=(0.5, 0.075)` with
+bold weight, a light-gray separator line at y=0.055, the same `meta_text`
+format/position, `dpi=200` with `bbox_inches='tight'`. This is a pure
+rendering change against the split architecture — applies to any future
+tile's already-saved predictions without new inference.
+
+## Running two tiles concurrently
+
+Kaggle allows up to 2 concurrent GPU sessions per account but only one
+active version per kernel object — pushing a new version to a kernel that's
+still running doesn't run in parallel, it errors with "Maximum batch GPU
+session count of 2 reached" (if the account is already at the cap) or just
+queues behind the current run. To get two tiles running at once, created a
+second, separately-named kernel (`harish77718/nb09-tile2-475-5550`) as its
+own push target — same notebook content, only `TARGET_TILE` differs. Both
+kernels share the same underlying notebook code as it evolves (config,
+rendering fixes) via manual copy + a scripted `TARGET_TILE` swap, so keep
+both push folders (`notebooks/push/nb09/`, `notebooks/push/nb09-tile2/`) in
+sync when the shared logic changes.
+
 ## Iteration 1 — v5 push, tile `dop20_32_468_5543_1_he` (Frankfurt airport)
 
 - **Pushed:** 2026-07-18 ~22:48
