@@ -423,4 +423,56 @@ sync when the shared logic changes.
   notebook for full wording.
 - **Status:** running — see below for outcome once pulled.
 
+## Tile 2 — `dop20_32_475_5550_1_he` (Frankfurt Hbf) result
+
+Ran via the second parallel kernel (`nb09-tile2-475-5550`, v2 after a v1
+conda-network retry). Completed cleanly, exact-match rendering layout
+confirmed correct (tight margins, gray separator, bold legend — matches
+the reference format).
+
+**Same class-confusion failure as tile 1's runway, on railway/platform/road
+this time.** Baseline pixel histogram:
+
+```
+building:   25.8%
+vehicles:    2.1%
+trees:       0.8%
+grass:      11.7%
+background: 59.7%
+railway:     0.0%   <- completely absent
+platform:    0.0%   <- completely absent
+road:        0.0%   <- completely absent
+```
+
+Visually, the rail-yard area (the dominant feature of this scene) is mostly
+untouched background, while grass (cyan) has spread onto areas that are
+clearly urban/paved in the source image, not grass — same over-permissive-
+prompt pattern that swallowed tile 1's runway class, just with grass as the
+culprit this time instead of road. Needs the same fix approach: narrow the
+grass prompt to grass-specific cues (green color, blade texture) that don't
+match paved/gravel rail-yard surfaces, rather than continuing to add more
+railway/platform synonyms (already tried once for platform in the v1
+rework, without success on this run).
+
+**Update after inspecting v2's Part-C prompt-wording panel directly**
+(user's own observation): the **single-word** variant's `"railway"` prompt
+found 10.9% railway coverage (patchy, but real detection) vs. **0%** for
+the elaborate multi-synonym prompt in the same baseline run. This is the
+*opposite* lesson from tile 1's runway class (where multi-synonym beat
+single-word) — confirms there is no universal "longer is better" or
+"shorter is better" rule; it's genuinely per-class and has to be checked,
+not assumed. Road was also visibly reasonable ("okayish") in the
+single-word variant. Platform stayed at 0% across every prompt variant
+tested (multi, single, ambiguous) in this scene — dropped from the class
+list entirely rather than continue guessing at wording for a class that's
+never once produced a detection here.
+
+**Fix applied for the v3→v4 iteration:** switched tile 2's railway `multi`
+prompt from the long synonym string down to short, concrete wording
+(`"railway track, train tracks, rail line"`), and removed `platform` from
+the class list (`multi`, `display`, `single`, `ambiguous`, `colors` all
+updated — now 6 classes instead of 7). Grass narrowing (previous fix) is
+also still in this run; v3 (grass-fix-only) was pushed and completed/is
+completing separately before this second fix layers on top.
+
 <!-- Next iterations appended below as they land -->
