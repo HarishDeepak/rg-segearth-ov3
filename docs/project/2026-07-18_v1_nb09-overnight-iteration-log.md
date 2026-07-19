@@ -501,4 +501,74 @@ sweep, prompt-style sweep) — the missing piece is writing up the actual
 conclusion per tile/class once all three sweeps have real data, not just
 picking whichever variant looks best and moving on silently.
 
+## 2026-07-19 — tile 2 v3 review + platform drop + overexposure-aware road wording
+
+**Pulled and reviewed v3 (grass-fix-only run, main railway/platform/road fix
+not yet in it).** Baseline (multi-synonym) histogram confirmed the same
+0%/0%/0% railway/platform/road failure persists even with grass narrowed:
+
+```
+building:  26.2%
+vehicles:   2.1%
+trees:      2.2%
+grass:      1.1%
+background: 68.4%
+railway/platform/road: 0.0% each
+```
+
+v3's Part-C sweep reconfirmed the earlier single-word-vs-multi-synonym
+split directly: `single-word` → railway=10.9%, road=32.9%, platform=0%;
+`ambiguous` → platform=45.6%, railway=0.2%. Railway and platform/road are
+each individually detectable by SAM3 in this scene — they just never
+survive together in the multi-synonym prompt set. Confirmed visually too:
+the rendered baseline overlay shows the entire track-bed/platform/train-shed
+band as flat unclassified background, not misclassified into another
+foreground color — buildings (blue), scattered vehicles (yellow), and
+tree/grass patches are the only structure showing.
+
+**User reviewed the source image directly and made three calls:**
+
+1. **Drop `platform` as a class for this tile entirely.** Not confident
+   it's necessary/worth a class slot here. Can revisit later if
+   railway/road land cleanly first — removed from `multi`, `display`,
+   `single`, `ambiguous`, `colors` (6 classes now, was 7).
+2. **Revert `tree` back to plain `"tree"`.** The "dense tree canopy"
+   reframing (validated on tiles 2/3 previously as the fix for
+   forest-as-continuous-texture) isn't needed here — this scene's trees are
+   scattered, not a dense canopy, so the generic word should suffice.
+3. **Road prompt must not assume normal asphalt contrast.** The tile is
+   shot in strong sun with overexposure — user pointed out the road surface
+   itself is likely washed out too, same as the ballast/platform tonal
+   range flagged earlier. Lane-marking/curb cues alone (the tile-1-derived
+   narrowing pattern) may not be visible under this lighting either.
+   Rewrote to `"paved road, street, bright overexposed light grey road
+   surface with lane markings"` — names the lighting condition directly
+   instead of assuming a normal dark-asphalt look.
+
+**Thresholds and window size left at the shared default** for this
+iteration (`prob_thd=0.1, confidence_threshold=0.1, slide_crop=1024,
+slide_stride=768` — no per-tile override), following the one-variable-at-
+a-time rule: this push only changes prompt wording so any change in
+railway/platform/road detection can be attributed to that alone.
+
+Reviewed the existing B/A sweep data before deciding, to check whether
+threshold or window size looked like plausible contributing causes:
+- **`prob_thd` sweep:** 0.05→building 40.4%, 0.1→26.2%, 0.3→14.0% — real
+  effect on overall coverage, but nothing suggesting it's specifically
+  gating railway/road to zero (they were 0% at every value tested).
+- **`conf_thd` sweep:** 26.3% / 26.2% / 23.3% across 0.05/0.1/0.3 — weak
+  effect, not a plausible cause either.
+- **Window-size (A) sweep:** `768/576` was the *only* window size where
+  `road` appeared at all in the multi-synonym config (0.2%, still tiny);
+  `1024/768` and `1500/1200` both had road=0%. Railway/platform were 0% at
+  every window size regardless. Weak but real signal that a smaller window
+  may help thin/precise classes here — noted as the next isolated
+  experiment to try (own dedicated `baseline` override at 768/576) *if* the
+  prompt-only fix in this iteration doesn't recover railway/road on its
+  own — not stacked into this push.
+
+**Fix applied, pushed as the next tile2-kernel iteration:** prompt-only
+change (railway shortened, platform dropped, tree reverted to plain,
+road rewritten for overexposure). Thresholds/window size unchanged.
+
 <!-- Next iterations appended below as they land -->
