@@ -475,4 +475,30 @@ updated — now 6 classes instead of 7). Grass narrowing (previous fix) is
 also still in this run; v3 (grass-fix-only) was pushed and completed/is
 completing separately before this second fix layers on top.
 
+**Correction on platform, from the user's direct description of the source
+image:** platform is NOT out of the tile's bounds — the tile clearly shows
+the train shed's arched roofs and light-grey platform islands between the
+tracks. The 0% detection is a genuine model failure, not a scene-content
+gap. User also flagged that this specific tile appears to be shot in
+strong sun with overexposure/shadow, meaning roads, rail tracks, and
+platform surfaces likely sit in a visually similar washed-out light-grey
+tonal range in this image specifically — not just semantically similar
+wording, but genuinely hard to tell apart by pixel color/texture in this
+lighting. This is a stronger explanation for why a generic "road" prompt
+kept winning over railway/platform than "the wording was just too vague."
+
+## Deliverable framing correction (user, mid-session)
+
+The actual goal of NB09 is not to hand-tune each tile to a clean-looking
+map — it's to produce a **documented, evidence-based comparison** of which
+knob (prompt style — single-word vs multi-synonym vs ambiguous — window
+size, thresholds) helps or hurts for which class/scene, with the rendered
+images as the proof artifacts. "Should we use single words or synonyms" is
+supposed to be an answered, evidenced question per class by the end of
+this work, not a settled default applied blindly everywhere. This matches
+what Image A/B/C already produce per tile (window-size sweep, threshold
+sweep, prompt-style sweep) — the missing piece is writing up the actual
+conclusion per tile/class once all three sweeps have real data, not just
+picking whichever variant looks best and moving on silently.
+
 <!-- Next iterations appended below as they land -->
