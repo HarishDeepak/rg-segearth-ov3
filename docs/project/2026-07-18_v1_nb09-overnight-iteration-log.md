@@ -658,4 +658,55 @@ background reading similarly) may now be claiming ground that should be
    right call, given `road` — one of the classes switched to short wording
    this round — swung to a plausibly-overcorrected 42.5%?
 
+## 2026-07-19 (cont.) — v6 result: tracks-drop + grass/trees split both confirmed
+
+User reviewed `C_prompt_ambiguous` directly and made the final call rather
+than continuing to root-cause questions 1-3 above: **drop `tracks`/`railway`
+as a class entirely for this tile.** Reasoning — it isn't reliably
+detectable here as its own concept under any wording tried across 3
+iterations (short phrase in v4: 11.3% but only on open trackbed; merged
+3-concept phrase in v5: 0%; ambiguous single-word stand-in: 0.2%). The
+ambiguous variant's actual behavior — `building` naturally extending into
+the platform/shed canopy area, since they're physically attached — was
+identified as the correct outcome to keep, not a bug to fix. The open
+ballast/trackbed area itself is left unclassified (background) by design;
+only `train` (sitting on top of it) and `building` get labels there.
+
+Separately, user also spotted grass being absorbed into trees in that same
+ambiguous variant (grass at 0.1%, essentially gone) — both had been reduced
+to single generic words in v5's short-everywhere pass and become too close
+in embedding space. Reworded `trees` toward woody/canopy framing
+(`"tree, wooded canopy"`) to disambiguate from lower grass/lawn vegetation
+(`"grass, lawn, low vegetation"`), undoing v5's over-shortening on this one
+pair while keeping everything else short.
+
+Pushed as v6 (6 classes: building, road, vehicles, trees, grass, train).
+**Result — both fixes confirmed, before/after:**
+
+| class | v5 (before) | v6 (after) |
+|---|---|---|
+| grass | 5.6% | **9.1%** |
+| trees | 6.2% | 1.0% (now precise — matches this tile's scattered actual trees, not lawn) |
+| train | 1.0% | 1.0% (stable, unaffected) |
+| road | 42.5% | 43.2% (stable, no regression from dropping tracks) |
+| background | 3.3% | 3.9% (trackbed area, correctly left unclassified) |
+
+Visually confirmed in the rendered baseline overlay: grass (cyan) and trees
+(green) are now clearly separated across the tile — cyan on lawns/park
+patches, green confined to actual tree-canopy clusters — where v5 had grass
+almost entirely swallowed by trees. `train` still renders as distinct
+diagonal streaks in the trackbed. `building` correctly extends into the
+platform/shed structure. This is the tile-2 proof case for two mechanisms
+already seen on tile 1: (1) a class that consistently fails to separate
+from its neighbors under every prompt style tried should be dropped rather
+than endlessly re-worded, and (2) two classes reduced to overly similar
+generic single words can collapse into each other even when each word looks
+reasonable in isolation — the fix is differentiating the words, not
+lengthening either one.
+
+**Tile 2 status: considered done for this session** — building, road,
+vehicles, trees, grass, train all show sane, distinguishable, visually
+correct coverage. No further prompt iteration planned unless a new problem
+surfaces.
+
 <!-- Next iterations appended below as they land -->
