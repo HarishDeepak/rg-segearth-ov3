@@ -571,4 +571,91 @@ threshold or window size looked like plausible contributing causes:
 change (railway shortened, platform dropped, tree reverted to plain,
 road rewritten for overexposure). Thresholds/window size unchanged.
 
+## 2026-07-19 (cont.) — v4 result: railway partially recovered, road still ~absent
+
+Pulled v4. Baseline (multi-synonym) histogram:
+
+```
+railway:  11.3%   <- up from 0.0% in v3
+building: 26.1%
+road:      0.5%   <- up from 0.0%, but still far below single-word's 32.9%
+vehicles:  2.0%
+trees:     7.6%
+grass:     1.1%
+background: 51.3%
+```
+
+Railway's short-phrase rework is a real, confirmed fix — went from
+completely absent to 11.3%, visible in the rendered overlay as a solid
+purple mass across the dense parallel-track section of the yard (bottom-
+right of the rail complex). Trees also look qualitatively better
+distributed after the plain-word revert.
+
+**But visually, railway coverage stops abruptly partway across the yard —
+the left half of the trackbed (under the train shed's arched roofs, where
+the platform islands are) and the upper-left diagonal track band are still
+plain background, not purple.** The fix works where tracks form a dense,
+open, unbroken mass; it does not generalize to trackbed broken up by shed
+structure/roof shadow — which is exactly the area platform used to (attempt
+to) cover before being dropped. Open question for next iteration: was
+dropping platform premature, or does the shed-covered trackbed need its own
+prompt treatment regardless of platform.
+
+**Road is still effectively absent** (0.5%, barely moved from 0%) — the
+overexposure-aware rewording had almost no measurable effect, despite
+single-word "road" alone finding 32.9% in the same run's C-sweep. Road
+remains the least-recovered class on this tile; the wording change tested
+this iteration did not address whatever's actually suppressing it.
+
+## 2026-07-19 (cont.) — v5 result: train recovered, tracks regressed, road overcorrected
+
+Pulled v5 (7-class restructure: railway+platform merged into `tracks`,
+`train` added, every prompt shortened per the single-word pattern). Baseline
+histogram:
+
+```
+building: 40.1%
+road:     42.5%   <- up from 0.5% in v4, now looks overcorrected
+vehicles:  1.4%
+trees:     6.2%
+grass:     5.6%
+train:     1.0%   <- NEW, real detection
+tracks:    0.0%   <- regressed from railway's 11.3% in v4
+background: 3.3%  <- down from 51.3%, almost nothing left unclassified
+```
+
+**`train` worked as intended** — visually confirmed in the rendered overlay
+as distinct orange streaks sitting inside the trackbed, matching actual
+rolling stock positions in the source photo. First real detection of this
+class since it was added.
+
+**`tracks` regressed hard** — completely absent in every sweep variant
+except single-word (4.1%), down from `railway`'s 11.3% in v4 using the same
+open-trackbed area. The merged 3-concept prompt (`"train tracks, rail
+tracks, platform"`) may have diluted the embedding relative to v4's more
+focused short phrase, or the newly-added `train` class is now winning
+pixels in the same visual area that used to go to `tracks`/`railway` —
+not yet determined which.
+
+**Road swung from underdetected to likely overcorrected** — 42.5%, up from
+0.5%. Visually, the entire trackbed area that isn't `train` now reads as
+plain unclassified dark grey (same color family as `road` in the legend,
+though not proven to literally be labeled `road` without checking specific
+pixel locations) rather than `tracks`. Whatever previously suppressed road
+appears to have flipped to the opposite failure — road (or unclassified
+background reading similarly) may now be claiming ground that should be
+`tracks`.
+
+**Not yet root-caused. Open questions for next iteration:**
+1. Is `tracks` losing to `train` specifically, or to `road`/background? Needs
+   a per-pixel check of what class actually occupies the old-`railway`-shaped
+   region, not just the aggregate histogram.
+2. Was merging 3 concepts (`train tracks, rail tracks, platform`) into one
+   prompt the wrong move even though wording itself was kept short — maybe
+   the fix needs a shorter single-concept phrase, not a merged multi-concept
+   one, even at the cost of not literally saying "platform" anywhere.
+3. Was going short on every class this iteration (not just tracks) the
+   right call, given `road` — one of the classes switched to short wording
+   this round — swung to a plausibly-overcorrected 42.5%?
+
 <!-- Next iterations appended below as they land -->
