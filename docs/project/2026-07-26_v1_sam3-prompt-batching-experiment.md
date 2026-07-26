@@ -1,3 +1,5 @@
+eeeeste
+
 # SAM3 prompt-batching experiment — what we tested, what we found, what we're doing next
 
 Branch: `nb09-batch-experiment`. Code: `notebooks/push/nb09-batch-experiment/`
@@ -71,12 +73,12 @@ slower in every single crop/rep pair we ran, not just on average.
 
 **VRAM ceiling (separate sweep, same crop size):**
 
-| N prompts | Result | Peak VRAM |
-|---|---|---|
-| 6 | OK | 9.07 GB |
-| 9 | OK | 11.75 GB |
-| 12 | OK | 14.43 GB |
-| 16 | **OOM** | — |
+| N prompts | Result        | Peak VRAM |
+| --------- | ------------- | --------- |
+| 6         | OK            | 9.07 GB   |
+| 9         | OK            | 11.75 GB  |
+| 12        | OK            | 14.43 GB  |
+| 16        | **OOM** | —        |
 
 A T4 (16GB) tops out between 12 and 16 batched prompts at this crop size —
 below the 20+ synonym-heavy class lists this project sometimes uses.
@@ -84,17 +86,17 @@ below the 20+ synonym-heavy class lists this project sometimes uses.
 **Correctness: not a clean match.** Per-class max-abs-diff on the first test
 crop:
 
-| Class prompt | max\|diff\| |
-|---|---|
-| water body, river, lake | 2.7e-05 |
-| railway track, rail line | 3.2e-05 |
-| sunlit paved road... | 4.7e-04 |
-| football pitch... | 1.5e-03 |
-| clay sports court... | 1.6e-03 |
-| building, rooftop... | 2.1e-02 |
-| grass, lawn, low vegetation | 2.2e-02 |
-| tree, wooded canopy | 2.9e-02 |
-| **car, vehicle** | **9.2e-02** ← worst, drives the aggregate |
+| Class prompt                | max\|diff\|                                      |
+| --------------------------- | ------------------------------------------------ |
+| water body, river, lake     | 2.7e-05                                          |
+| railway track, rail line    | 3.2e-05                                          |
+| sunlit paved road...        | 4.7e-04                                          |
+| football pitch...           | 1.5e-03                                          |
+| clay sports court...        | 1.6e-03                                          |
+| building, rooftop...        | 2.1e-02                                          |
+| grass, lawn, low vegetation | 2.2e-02                                          |
+| tree, wooded canopy         | 2.9e-02                                          |
+| **car, vehicle**      | **9.2e-02** ← worst, drives the aggregate |
 
 The 9.2e-02 figure recurs across multiple crops (not a one-off outlier), and
 it's too large and too concentrated to be ordinary bf16 rounding — bf16
@@ -186,4 +188,61 @@ This work originally landed on `nb09-overnight-iteration` (the branch
 checked out at session start) — the wrong call, since that branch is shared
 with active parallel NB09 sweep work, and a stray commit from that work
 landed in the middle of ours. Moved to a dedicated `nb09-batch-experiment`
-branch for anything further on this task.
+branch for anything further on this task. (That branch also turned out to be
+shared with other concurrent work — NB10v2/NB10v3 commits from another
+session landed on it too. Nothing of ours was affected, but worth noting the
+isolation wasn't as clean in practice as intended.)
+
+---
+
+## Follow-up: the text-cache fix itself had a bug, found before trusting it
+
+After documenting the batching verdict above, we ported the `cache_text`
+fix into the real pipeline (`segearthov3_segmentor.py`) and built a
+dedicated correctness check (`verify_text_cache_fix.py`) before trusting it:
+run the old segmentor (re-encodes text every crop) and the new one (cached
+once in `__init__`) on identical crops, diff the output logits.
+
+**First run: FAIL.** Max-abs-diff of 0.116 — larger than the batching
+experiment's own 0.092, and this was supposed to be a *zero-risk*,
+numerically-identical refactor (same computation, called fewer times, no
+architecture change). A diff that large meant something was actually wrong,
+not just bf16 noise.
+
+**Root cause, found by re-reading the old and new code side by side:** the
+new cache builds each class's text embedding in `__init__`, via
+`model.backbone.forward_text(...)` — but that call was **not** wrapped in
+`torch.autocast(dtype=torch.bfloat16)`. The old path calls the exact same
+`forward_text` function, but from *inside* `_inference_single_view`'s
+existing `with torch.autocast(...)` block (via `set_text_prompt`). Same
+function, two different numeric precisions — that mismatch, not the caching
+change itself, produced the divergence. Fixed by wrapping the cache-building
+loop in the same autocast context.
+
+**This bug was hiding in the batching experiment too.** `cache_text` and
+`cache_text_batched` in `batch_prompts_experiment.py` were copied from (or
+modeled on) the same pattern and had the identical missing-autocast issue.
+Fixed both. This means **the 0.092 max-diff and 99.86% argmax-agreement
+numbers reported above for prompt-batching may be partly or mostly an
+artifact of this precision bug, not proof that batching itself is
+imprecise.** We have not yet re-run the batching comparison with the fix in
+place — the verdict on batching's speed/VRAM cost stands (that's pure timing
+and memory measurement, unaffected by this), but the *correctness* verdict
+needs re-measuring before it's trusted. Flagging this explicitly rather than
+quietly updating the number above, since the original numbers were reported
+to the user and shouldn't be silently changed after the fact.
+
+**Also confirmed:** this same missing-autocast pattern exists in NB09 cell
+11's actual production `cache_text` — it was copied from there in the first
+place. If NB09's sweeps ever get a text-caching optimization ported into
+them, they need this same autocast fix, or they'll have the same latent
+precision bug.
+
+**Second run (with the fix): pending.** `verify_text_cache_fix.py` was also
+extended past a pass/fail number: it now times both segmentor versions per
+crop (the actual point of the fix is a speed win, not just correctness), and
+saves a PNG per crop (input crop | old argmax | new argmax | disagreement
+overlay | logit-diff heatmap, with a class-name legend) so results can be
+visually inspected on Kaggle's output tab, plus a per-query pixel-count
+histogram in the JSON output to catch a class silently vanishing (which an
+averaged or max-only diff can hide even when the numbers look fine).
