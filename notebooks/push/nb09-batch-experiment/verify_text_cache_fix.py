@@ -17,9 +17,15 @@ Run:  PYTHONPATH=. python notebooks/push/nb09-batch-experiment/verify_text_cache
 import argparse
 import importlib.util
 import json
+import os
 import sys
 import time
 from pathlib import Path
+
+# Must be set before matplotlib is imported anywhere (including transitively
+# via mmseg/mmcv) -- Kaggle's papermill/Jupyter parent process sets MPLBACKEND
+# to a notebook-only backend that a plain script process can't use.
+os.environ["MPLBACKEND"] = "Agg"
 
 import numpy as np
 import torch
@@ -53,14 +59,11 @@ def timed(fn):
 
 
 def save_comparison_png(out_path, crop_pil, argmax_old, argmax_new, diff, class_names):
-    import matplotlib
-    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
-    from matplotlib import cm
 
     n_classes = len(class_names)
-    cmap = cm.get_cmap("tab20", max(n_classes, 1))
+    cmap = plt.get_cmap("tab20", max(n_classes, 1))
 
     fig, axes = plt.subplots(1, 5, figsize=(24, 5))
     axes[0].imshow(crop_pil)
