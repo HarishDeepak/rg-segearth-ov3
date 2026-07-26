@@ -1,0 +1,20 @@
+{
+  "id": "harish77718/nb09-batch-experiment",
+  "title": "NB09 Batch Experiment",
+  "code_file": "NB09_batch_experiment.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/frankfurt-dot20",
+    "dummyirl/darmstadt-dop20",
+    "dummyirl/vogelsbergkreis-lautertal-dop20"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
