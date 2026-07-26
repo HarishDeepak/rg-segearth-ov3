@@ -49,6 +49,15 @@ class SegEarthOV3Segmentation(BaseSegmentor):
         self.use_presence_score = use_presence_score
         self.use_transformer_decoder = use_transformer_decoder
 
+        # Text encoding depends only on query_words (fixed for this object's
+        # lifetime), not on the crop — cache once instead of re-running the
+        # text encoder for every class on every sliding-window crop.
+        self._text_cache = []
+        with torch.no_grad():
+            for word in self.query_words:
+                te = model.backbone.forward_text([word], device=self.device)
+                self._text_cache.append({k: v.cpu() for k, v in te.items()})
+
     def _inference_single_view(self, image):
         """Inference on a single PIL image or crop patch."""
         w, h = image.size
@@ -56,10 +65,13 @@ class SegEarthOV3Segmentation(BaseSegmentor):
 
         with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
             inference_state = self.processor.set_image(image)
-            
-            for query_idx, query_word in enumerate(self.query_words):
+
+            for query_idx, te_cpu in enumerate(self._text_cache):
                 self.processor.reset_all_prompts(inference_state)
-                inference_state = self.processor.set_text_prompt(state=inference_state, prompt=query_word)
+                for k, v in te_cpu.items():
+                    inference_state["backbone_out"][k] = v.to(self.device)
+                inference_state["geometric_prompt"] = self.processor.model._get_dummy_prompt()
+                inference_state = self.processor._forward_grounding(inference_state)
 
                 if self.use_transformer_decoder:
                     if inference_state['masks_logits'].shape[0] > 0:
