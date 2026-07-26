@@ -201,3 +201,130 @@ worth repeating for every notebook built this way.) Not yet run on
 Kaggle — that's the next step, pending confirmation to spend the GPU-hour
 budget on a 16-rerun job (roughly 1.6x v1's per-tile cost).
 
+## Step 7 — v2 Kaggle run #1 (16 reruns, conf_thd up to 0.7)
+
+Ran successfully: https://www.kaggle.com/code/harish77718/nb10v2-car-vs-fullclass-confthd
+(kernel slug came out as `nb10v2-car-vs-fullclass-confthd`, not the
+`nb10v2-car-fullclass-confthd` id originally specified in
+`kernel-metadata.json` — Kaggle derives the slug from the title text, so
+the id must match what Kaggle actually assigns or a second push 409s;
+fixed by updating the `id` field after the first push).
+
+Key results (full numbers/analysis relayed to Harish in-session):
+- Run A (car-only) monotonically declines 1.23M→984K px across
+  0.01→0.7, but **plateaus below 0.05** — 0.01/0.02/0.05 are nearly
+  identical, meaning v1's original 0.05 floor wasn't cutting off much of
+  the real curve.
+- Run B (full-class): **`tracks` got real, substantial coverage this
+  time** (~23% of the tile) — confirming the platform-absence hypothesis
+  from Step 2/3. Its trend is inverted vs. every other class: increases
+  as `confidence_threshold` rises, while building/road/car/tree/grass/
+  train all decrease.
+- Car pixel count is consistently ~1.5-2% *higher* in the full-class run
+  than car-only at every threshold — no competition loss for car here.
+- Model-derived car/train overlap analysis found real, growing overlap
+  regions (353→1828 px) across the sweep, though the region turned out to
+  be a broad multi-patch area (99th-percentile criterion), not a single
+  pinpointed wagon — flagged as a caveat, not oversold as exact
+  localization of the specific car-carrier wagon Harish spotted.
+
+Follow-up analysis (no rerun needed, computed directly from the saved
+`.npy` label maps): Dan/teammate asked why the large parking lot's car
+count barely changes across the threshold sweep while the tile-wide total
+clearly declines. Isolated the lot's bounding box (the single largest,
+completely threshold-invariant blob, 71,723 px unchanged from
+`conf_thd=0.01` to `0.7`) and diffed its logits directly: mean logit
+change inside the lot between the threshold extremes was **0.00000** —
+SAM3's grounding is saturated there regardless of threshold, while ~41%
+of the tile's pixels *do* change. Cropping the lot out of the full label
+maps confirmed it holds ~99.99% of its pixels across the whole sweep,
+while "everything else" drops ~22%. Answered Dan's two hypotheses
+directly: yes, it's one blob; and yes, the decline is driven by weaker,
+more borderline detections elsewhere on the tile, not the lot. Proposed
+(but did not build, per Harish's call — "skip both, this is enough
+analysis for now") a follow-up `prob_thd` re-threshold of the already-
+saved lot-region logits (free) and a bounded crop-only stride/crop test
+(would need a new small experiment, real GPU cost) — both shelved as
+diminishing returns for this demo.
+
+## Step 8 — v2 Kaggle run #2 (18 reruns, conf_thd extended to 0.9)
+
+Harish asked to extend the sweep ceiling to 0.9. Added one value —
+`CONF_THD_SWEEP = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9]` — not
+a finer/more gradual step size throughout, just one more point at the top
+(confirmed with Harish this reading was correct: "ya thats ok sounds
+good"). Re-pushed; hit the same slug-vs-id 409 issue as before (metadata
+file still had the stale `nb10v2-car-fullclass-confthd` id from before
+the first fix — the fix from run #1 hadn't been committed/synced into the
+push-folder copy). Fixed again, pushed successfully as kernel version 2,
+ran to completion.
+
+## Step 9 — course correction: car-only only, wrong visualization check
+
+Two things Harish flagged as wrong after reviewing run #2's results:
+
+1. **Full-class Run B should not have been included.** Re-reading the
+   session: Harish's original v2 request *did* ask for both car-only and
+   full-class ("i want both only car as prompt and also the full class
+   for all test"), and this was confirmed again mid-session. But the
+   follow-up correction reverses that — going forward, NB10 should be
+   **car-only only**, matching v1's original approach. Not a
+   contradiction so much as a genuine change of direction after seeing
+   the full-class results in practice.
+
+2. **The dummyirl visualization check was done on the wrong file.**
+   Earlier (Step 6/end of v1 era) I checked `dummy-irl/SegEarth-OV-3`'s
+   most recent commit (`55357cf`, "update sam3 visualization") and found
+   it only touched `sam3/visualization_utils.py` — masklet/object-
+   tracking rendering (bounding boxes, per-object IDs via `cv2.putText`),
+   unrelated to our RGB|overlay-with-legend matplotlib style. Correctly
+   concluded there was nothing to pull for our output template *from that
+   file*. But this was incomplete: Harish redirected me to check NB09's
+   **own most recent Kaggle run** instead
+   (`harish77718/nb09-zero-shot-sensitivity`, run 2026-07-26 20:39),
+   which revealed NB09 had *already* been re-synced (by other work
+   happening in parallel outside this session) to match a *different*
+   dummyirl file — `segment.py`, not `visualization_utils.py` — that I
+   had never checked. NB09's `render_result` function's own docstring
+   documents the exact re-sync and diffs from the old approximation:
+   `figsize=(10,7)` `dpi=300` (not `(20,12)`/`200`), 4-column legend grid
+   via `ncol=min(4,...)` (not single-row `ncol=min(7,...)`), `alpha=0.5`
+   (not `0.6`), 2-line meta text with `\n` (not one crammed line), plain
+   `savefig` with no `bbox_inches='tight'`.
+
+   **Lesson**: "check dummyirl for updates" isn't fully answered by
+   checking the upstream repo's commit log alone when a *sibling
+   notebook in this same repo* may have already done that sync — always
+   check for evidence of an already-completed sync (a docstring, a
+   comment, a recent file diff) in the codebase itself before concluding
+   "nothing relevant found" from the upstream repo directly.
+
+## Step 10 — build NB10v3
+
+Built `notebooks/NB10v3_car_confthd.ipynb` (14 cells): same env-setup/
+clone cells as v1/v2. New inference cell: car-only only
+(`words=["car"]`), 9 `confidence_threshold` values
+(`0.01`→`0.9`), `prob_thd=0.1`/`slide_crop=1024`/`slide_stride=768`
+unchanged — 9 reruns total (down from v2's 18).
+
+New rendering cell: `to_rgb`/`render_result` copied **verbatim** (diffed
+programmatically against NB09's cell 13 — identical except for the
+docstring, confirmed via `difflib`) from
+`notebooks/push/nb09/NB09_zeroshot_sensitivity.ipynb`, so the output
+image format now genuinely matches the team's current template rather
+than a reimplemented approximation. Kept the car pixel/blob-count trend
+plot from v2 (Harish's own numeric-analysis addition, unrelated to the
+template mismatch, still valuable). Dropped the car-vs-fullclass
+comparison chart and the car/train overlap analysis, since both needed
+Run B's full-class logits which no longer exist in v3.
+
+Both cells verified via `compile()` on the assembled notebook before
+pushing (same discipline as v1/v2). Committed as `5e51b29` on
+`nb09-batch-experiment`, confirmed synced to `origin` via `git fetch`
+before considering the push done — this branch has multiple concurrent
+writers this session (other work landed commits `4615723` and `609bdb6`
+in between my own commits without any action on my part), so verifying
+against `origin` rather than trusting local state alone matters here.
+
+Next: push to Kaggle and run.
+
