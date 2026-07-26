@@ -1,0 +1,18 @@
+{
+  "id": "harish77718/nb10-car-confthd-demo",
+  "title": "NB10 Car ConfThd Demo",
+  "code_file": "NB10_car_confthd_demo.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "harish77718/darmstadt-dop20"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
