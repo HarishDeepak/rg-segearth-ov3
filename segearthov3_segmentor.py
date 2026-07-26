@@ -53,7 +53,7 @@ class SegEarthOV3Segmentation(BaseSegmentor):
         # lifetime), not on the crop — cache once instead of re-running the
         # text encoder for every class on every sliding-window crop.
         self._text_cache = []
-        with torch.no_grad():
+        with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
             for word in self.query_words:
                 te = model.backbone.forward_text([word], device=self.device)
                 self._text_cache.append({k: v.cpu() for k, v in te.items()})

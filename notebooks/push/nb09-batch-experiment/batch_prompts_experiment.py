@@ -42,9 +42,18 @@ WORDS = [
 # ─────────────────────── baseline: NB09's per-class loop ───────────────────────
 # Copied from notebooks/push/nb09 cell 11 unmodified, so "sequential" is exactly
 # what the sweeps run today, not a re-derivation of it.
+#
+# NOTE: NB09 cell 11's original cache_text has no autocast context, while
+# collect_class_scores runs under `torch.autocast(dtype=torch.bfloat16)`. That
+# means NB09's own text embeddings are computed in a different precision than
+# everything downstream of them -- caught while verifying segearthov3_segmentor.py's
+# text-cache fix (verify_text_cache_fix.py surfaced a 0.116 max-diff vs the old
+# per-crop-encoding path, traced to exactly this mismatch). Fixed here to match
+# the precision _inference_single_view actually runs under; NB09's production
+# cell 11 has the same latent bug and should get the same fix.
 def cache_text(model, words):
     cache = []
-    with torch.no_grad():
+    with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         for word in words:
             te = model.backbone.forward_text([word], device=DEVICE)
             cache.append({k: v.cpu() for k, v in te.items()})
@@ -79,7 +88,7 @@ def collect_class_scores(model, processor, state, h, w, te_cache, n_classes, dev
 # ─────────────────────── batched: one grounding call for N prompts ───────────────────────
 def cache_text_batched(model, words):
     """One forward_text over all N prompts -> language_* with batch dim N."""
-    with torch.no_grad():
+    with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         te = model.backbone.forward_text(words, device=DEVICE)
     return {k: v.cpu() for k, v in te.items()}
 
