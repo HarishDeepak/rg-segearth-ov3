@@ -328,3 +328,32 @@ against `origin` rather than trusting local state alone matters here.
 
 Next: push to Kaggle and run.
 
+## Step 11 — NB10v3 Kaggle run
+
+Ran successfully: https://www.kaggle.com/code/harish77718/nb10v3-car-confthd
+(kernel slug matched the specified `id` this time — `nb10v3-car-confthd`
+from title "NB10v3 Car ConfThd" — no 409 conflict, unlike both v2 pushes).
+
+Results: `[(0.01, 1233694, 1427), (0.02, 1233589, 1425), (0.05, 1231989,
+1420), (0.1, 1223534, 1398), (0.2, 1161585, 1231), (0.3, 1099292, 1105),
+(0.5, 1002084, 996), (0.7, 983528, 1017), (0.9, 982264, 1017)]` — matches
+v2's car-only run exactly at every shared threshold (same underlying
+inference, confirming no regression from the render-only rewrite), and
+the new 0.9 point (982,264 px) confirms the plateau already visible at
+0.7 (983,528 px) continues — essentially flat between 0.7 and 0.9,
+consistent with the earlier finding that the curve levels off at both
+extremes of the range.
+
+Rendered output visually confirmed to match NB09's current template:
+same title text, same 2-line meta-text footer format, `alpha=0.5`, single
+"car" legend entry (correctly reduced to one class since this run has no
+other classes). Screenshot compared directly against NB09's own latest
+render — layout, footer, and legend styling are the same.
+
+Both git commits for this step landed correctly on `nb09-batch-experiment`
+(`5e51b29` notebook, `17ee11b` this devlog) and were confirmed synced to
+`origin` via `git fetch` before considering the push done — worth noting
+this branch had commits from other parallel work land in between without
+any action from this session (`4615723`, `609bdb6`), so checking against
+`origin` rather than trusting local `git log` alone mattered here.
+
