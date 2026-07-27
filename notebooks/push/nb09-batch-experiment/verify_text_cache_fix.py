@@ -101,6 +101,13 @@ def main():
     ap.add_argument("--crops", type=int, default=3)
     ap.add_argument("--classnames", default="configs/cls_hessen.txt")
     ap.add_argument("--out-dir", default="/kaggle/working/verify_text_cache")
+    ap.add_argument("--png-limit", type=int, default=3,
+                    help="only save comparison PNGs for the first N crops (avoids "
+                         "60+ matplotlib renders when --crops is large)")
+    ap.add_argument("--full-tile-crops", type=int, default=None,
+                    help="if set, print an extrapolated old/new time estimate for "
+                         "a full tile with this many crops (e.g. 1521 for a real "
+                         "5000x5000 Hessen tile at slide_crop=256/stride=128)")
     args = ap.parse_args()
 
     hits = sorted(Path("/kaggle/input").rglob(f"{args.tile}.jpg")) if Path("/kaggle/input").exists() else []
@@ -157,12 +164,13 @@ def main():
                   f"max|diff|={d[qi].max().item():.3e}", flush=True)
         per_crop.append(dict(crop=i, argmax_agreement=agree, per_query=per_query))
 
-        png_path = out_dir / f"crop{i}_comparison.png"
-        save_comparison_png(
-            png_path, crop_pil, old_np, new_np,
-            d.amax(0).cpu().numpy(), query_words,
-        )
-        print(f"    saved {png_path}", flush=True)
+        if i < args.png_limit:
+            png_path = out_dir / f"crop{i}_comparison.png"
+            save_comparison_png(
+                png_path, crop_pil, old_np, new_np,
+                d.amax(0).cpu().numpy(), query_words,
+            )
+            print(f"    saved {png_path}", flush=True)
 
     old_t, new_t = np.array(old_times), np.array(new_times)
     res = dict(
@@ -173,14 +181,30 @@ def main():
         max_abs_diff=float(max(maxdiffs)), mean_abs_diff=float(np.mean(meandiffs)),
         per_crop=per_crop,
     )
+
+    if args.full_tile_crops:
+        n = args.full_tile_crops
+        res["full_tile_crops"] = n
+        res["full_tile_old_est_s"] = float(old_t.mean() * n)
+        res["full_tile_new_est_s"] = float(new_t.mean() * n)
+        res["full_tile_time_saved_est_s"] = float((old_t.mean() - new_t.mean()) * n)
+
     print("\n" + json.dumps(res, indent=2), flush=True)
     (out_dir / "results.json").write_text(json.dumps(res, indent=2))
     print(f"\nWrote {out_dir / 'results.json'}", flush=True)
 
     print(f"\nOverall max|diff| across {len(crops)} crops: {max(maxdiffs):.3e}"
           f"  mean|diff|: {np.mean(meandiffs):.3e}", flush=True)
-    print(f"Mean per-crop time: old {old_t.mean():.3f}s  new {new_t.mean():.3f}s  "
+    print(f"Mean per-crop time (n={len(crops)}): old {old_t.mean():.3f}s  new {new_t.mean():.3f}s  "
           f"speedup {old_t.mean() / new_t.mean():.2f}x", flush=True)
+    if args.full_tile_crops:
+        n = args.full_tile_crops
+        print(f"\nExtrapolated to a full tile ({n} crops, linear from this sample's "
+              f"per-crop mean -- not independently measured at full scale):", flush=True)
+        print(f"  old (re-encode/crop): {old_t.mean()*n:.1f}s  (~{old_t.mean()*n/60:.1f} min)", flush=True)
+        print(f"  new (cached text):    {new_t.mean()*n:.1f}s  (~{new_t.mean()*n/60:.1f} min)", flush=True)
+        print(f"  estimated time saved: {(old_t.mean()-new_t.mean())*n:.1f}s  "
+              f"(~{(old_t.mean()-new_t.mean())*n/60:.1f} min)", flush=True)
     if max(maxdiffs) < 1e-4:
         print("PASS: outputs match (within bf16 rounding).", flush=True)
         return 0
