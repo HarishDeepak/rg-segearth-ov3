@@ -1,0 +1,18 @@
+{
+  "id": "harish77718/nb11-presence-score-check",
+  "title": "NB11 Presence Score Check",
+  "code_file": "NB11_presence_score_check.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/darmstadt-dop20"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
