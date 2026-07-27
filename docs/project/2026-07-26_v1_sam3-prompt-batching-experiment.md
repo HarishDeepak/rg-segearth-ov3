@@ -238,11 +238,61 @@ place. If NB09's sweeps ever get a text-caching optimization ported into
 them, they need this same autocast fix, or they'll have the same latent
 precision bug.
 
-**Second run (with the fix): pending.** `verify_text_cache_fix.py` was also
-extended past a pass/fail number: it now times both segmentor versions per
-crop (the actual point of the fix is a speed win, not just correctness), and
-saves a PNG per crop (input crop | old argmax | new argmax | disagreement
-overlay | logit-diff heatmap, with a class-name legend) so results can be
-visually inspected on Kaggle's output tab, plus a per-query pixel-count
-histogram in the JSON output to catch a class silently vanishing (which an
-averaged or max-only diff can hide even when the numbers look fine).
+`verify_text_cache_fix.py` was also extended past a pass/fail number: it now
+times both segmentor versions per crop, saves a PNG per crop (input crop |
+old argmax | new argmax | disagreement overlay | logit-diff heatmap, with a
+class-name legend), and writes a per-query pixel-count histogram to the JSON
+output, to catch a class silently vanishing (which an averaged or max-only
+diff can hide even when the headline numbers look fine).
+
+**Second run (with the autocast fix applied), Kaggle T4, tile
+`dop20_32_476_5524_1_he`, `cls_hessen.txt` (12 queries across 6 classes),
+3 crops of 768px:**
+
+```json
+{
+  "old_mean_s": 7.935, "old_std_s": 0.142,
+  "new_mean_s": 7.631, "new_std_s": 0.249,
+  "speedup": 1.040,
+  "max_abs_diff": 0.0, "mean_abs_diff": 0.0
+}
+```
+
+**PASS — exact, bit-for-bit match.** Every one of the 12 queries across all
+3 crops has `max_diff: 0.0` and identical pixel counts (`old_px == new_px`,
+checked individually, not just in aggregate) between the old and new
+segmentor. Argmax agreement is `1.0` on every crop. Visually confirmed too —
+the saved PNGs show pixel-identical segmentation maps and a flat, all-zero
+diff heatmap on all 3 crops; no disagreement overlay pixels anywhere. This
+is the result that should have appeared the first time, before the missing
+autocast wrapper masked it as a false failure.
+
+**The text-cache fix is confirmed correct and safe to keep.** Speedup at
+this small scale (3 crops, 12 queries) is modest — 1.04x — because the
+savings scale with crops-per-tile, and this test only exercises 3. The
+expected larger win (a ~5000×5000 tile at crop=768/stride=576 is ~64 crops,
+collapsing ~64× redundant text-encoder calls down to 1×) hasn't been
+measured directly on a full tile yet; this test only establishes
+correctness plus a directional (if small) speed improvement at low crop
+count.
+
+**Batching correctness re-measured with the same autocast fix applied,
+same tile/crop/N=9-prompts setup as before:**
+
+```json
+{
+  "seq_mean_s": 3.204, "bat_mean_s": 3.423,
+  "speedup": 0.936,
+  "seq_peak_mem_gb": 4.938, "bat_peak_mem_gb": 11.814,
+  "max_abs_diff": 0.110, "argmax_agreement": 0.998
+}
+```
+
+**The correctness gap did not shrink — it got slightly worse (0.110 vs the
+original 0.092).** This resolves the open question above: prompt-batching's
+divergence from the sequential baseline is a real property of batching
+itself (plausibly the padding-mask/heterogeneous-prompt-length mechanism
+described earlier), not an artifact of the missing-autocast bug. The speed
+and VRAM verdicts are unchanged (still no speedup, still ~2.4x more memory).
+**Batching remains not worth adopting**, now on a fully trustworthy
+measurement.
