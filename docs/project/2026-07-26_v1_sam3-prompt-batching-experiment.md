@@ -296,3 +296,55 @@ described earlier), not an artifact of the missing-autocast bug. The speed
 and VRAM verdicts are unchanged (still no speedup, still ~2.4x more memory).
 **Batching remains not worth adopting**, now on a fully trustworthy
 measurement.
+
+---
+
+## A third lever tried: torch.compile — confirmed dead end on T4
+
+Follow-up research (a separate, focused pass) established that
+`build_sam3_image_model(compile=True)` only wires `compile_mode` into the
+ViT image encoder and PixelDecoder — not the transformer decoder that
+actually runs once per class per crop, the real hot loop. Still cheap
+enough to test directly rather than debate further, so we built
+`verify_torch_compile.py`: two SAM3 instances (`compile=False` baseline,
+`compile=True`), same crops, crop 0 timed separately as one-time compile
+cost, correctness diffed with the same per-query pixel-histogram rigor as
+the text-cache check.
+
+**Result: hard compile failure, not a slow/marginal result.**
+
+```
+RuntimeError: Internal Triton PTX codegen error:
+ptxas ..., line 134; error: Feature '.bf16' requires .target sm_80 or higher
+ptxas ..., line 134; error: Feature 'cvt.bf16.f32' requires .target sm_80 or higher
+[... repeats for every bf16 op in the generated kernel ...]
+ptxas fatal: Ptx assembly aborted due to errors
+```
+
+Triton's Inductor backend generates PTX code containing native `bf16`
+instructions for the compiled kernel — these instructions require compute
+capability `sm_80` (Ampere) or newer. The T4 is Turing (`sm_75`), confirmed
+elsewhere in this repo's own code (`model_builder.py`'s `_setup_tf32` gate
+on `major >= 8`). The GPU's instruction set simply does not have these
+opcodes. This is not a tuning problem or a "modest gains" outcome — it's a
+hard incompatibility between `torch.compile` and `bfloat16` autocast on
+this specific hardware. Since this pipeline's entire inference path runs
+under `torch.autocast(dtype=torch.bfloat16)` (bf16 is used deliberately for
+memory/speed reasons already established elsewhere in this project),
+avoiding bf16 to make compile work would mean giving up the autocast this
+pipeline already depends on — not a targeted fix, a different pipeline.
+
+**Verdict: torch.compile is a dead end on Kaggle's T4 for this pipeline,
+confirmed with a real error rather than left as a "probably modest"
+prediction.** This also — retroactively — validates the earlier research
+pass's repeated point that T4/Turing gives `torch.compile`/Inductor the
+least to work with of any modern NVIDIA GPU generation; here it doesn't even
+get the chance to try. Revisit only if this project ever moves to Ampere+
+hardware.
+
+**Three inference-engineering levers tried this investigation, three
+"not worth adopting" verdicts, each backed by a real Kaggle measurement or
+a real Kaggle error, not a guess:** prompt-batching (no speedup, more VRAM,
+worse correctness), torch.compile (hard compile failure on T4's hardware).
+The one confirmed win is the text-encoding cache fix — free, safe, and
+already merged into `segearthov3_segmentor.py`.
