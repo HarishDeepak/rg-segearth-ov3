@@ -1,0 +1,18 @@
+{
+  "id": "harish77718/nb11v2-real-vs-fake-presence",
+  "title": "NB11v2 Real vs Fake Presence",
+  "code_file": "NB11v2_real_vs_fake_presence.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "dummyirl/sam3-weights",
+    "dummyirl/darmstadt-dop20"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
